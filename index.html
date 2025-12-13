@@ -140,6 +140,16 @@
             transform: translateX(-50%);
         }
         
+        .grid-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
         .lined {
             background-color: white;
         }
@@ -509,7 +519,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.94</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.97</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
@@ -528,6 +538,7 @@
         <div id="templatePage" class="template-page">
             <div id="borderOverlay" class="border-overlay"></div>
             <div id="contentArea" class="content-area grid">
+                <svg id="gridSvg" class="grid-svg"></svg>
                 <div id="urlText" class="url-text">https://srives.github.io/reMarkable/</div>
                 <div id="rulerLeft" class="ruler-left"></div>
                 <div id="rulerBottom" class="ruler-bottom"></div>
@@ -560,6 +571,7 @@
         const recommendationText = document.getElementById('recommendationText');
         const rulerLeft = document.getElementById('rulerLeft');
         const rulerBottom = document.getElementById('rulerBottom');
+        const gridSvg = document.getElementById('gridSvg');
         
         const devices = {
             rm2: {
@@ -644,53 +656,69 @@
             }
         };
         
-        const defaultMargins = {
+        const defaultMarginsInches = {
             // Full device sizes
-            '1404,1872': { top: 124.3, bottom: 135.6, left: 135.6, right: 124.3 },
-            '1620,2160': { top: 137.4, bottom: 148.7, left: 148.7, right: 137.4 },
-            '1696,954': { top: 79.2, bottom: 92.4, left: 92.4, right: 79.2 },
+            '1404,1872': { top: 0.6, bottom: 0.65, left: 0.6, right: 0.6 },
+            '1620,2160': { top: 0.6, bottom: 0.65, left: 0.65, right: 0.6 },
+            '1696,954': { top: 0.3, bottom: 0.35, left: 0.35, right: 0.3 },
             
-            // reMarkable 1/2 (226 PPI)
-            '961,1553': { top: 90.4, bottom: 101.7, left: 90.4, right: 90.4 },
-            '1130,1808': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
-            '1186,1808': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
-            '1317,1869': { top: 124.3, bottom: 135.6, left: 113, right: 113 },
-            '933,1317': { top: 90.4, bottom: 101.7, left: 90.4, right: 79.1 },
-            '1317,933': { top: 79.1, bottom: 90.4, left: 101.7, right: 79.1 },
-            '1146,1763': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
-            '1388,2081': { top: 124.3, bottom: 135.6, left: 124.3, right: 113 },
-            '1130,1130': { top: 90.4, bottom: 101.7, left: 90.4, right: 90.4 },
-            '1356,1356': { top: 101.7, bottom: 113, left: 101.7, right: 101.7 },
+            // Mass Market / Pocket Book (4.25" × 6.87")
+            '961,1553': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
+            '973,1573': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
+            '1573,973': { top: 0.3, bottom: 0.35, left: 0.45, right: 0.35 },
+            '1122,1814': { top: 0.35, bottom: 0.4, left: 0.35, right: 0.35 },
             
-            // reMarkable Pro (229 PPI)
-            '973,1573': { top: 91.6, bottom: 103, left: 91.6, right: 91.6 },
-            '1573,973': { top: 68.7, bottom: 80.1, left: 103, right: 80.1 },
-            '1145,1832': { top: 103, bottom: 114.5, left: 103, right: 91.6 },
-            '1832,1145': { top: 80.1, bottom: 91.6, left: 114.5, right: 91.6 },
-            '1202,1832': { top: 103, bottom: 114.5, left: 103, right: 91.6 },
-            '1832,1202': { top: 80.1, bottom: 91.6, left: 114.5, right: 91.6 },
-            '1260,1947': { top: 114.5, bottom: 125.9, left: 114.5, right: 103 },
-            '1947,1260': { top: 91.6, bottom: 103, left: 125.9, right: 103 },
-            '1374,2061': { top: 125.9, bottom: 137.4, left: 125.9, right: 114.5 },
-            '2061,1374': { top: 103, bottom: 114.5, left: 137.4, right: 114.5 },
-            '1335,1894': { top: 125.9, bottom: 137.4, left: 114.5, right: 114.5 },
-            '1894,1335': { top: 114.5, bottom: 125.9, left: 137.4, right: 114.5 },
-            '946,1335': { top: 91.6, bottom: 103, left: 91.6, right: 80.1 },
-            '1335,946': { top: 80.1, bottom: 91.6, left: 103, right: 80.1 },
-            '1161,1786': { top: 103, bottom: 114.5, left: 103, right: 91.6 },
-            '1786,1161': { top: 80.1, bottom: 91.6, left: 114.5, right: 91.6 },
-            '1406,2109': { top: 125.9, bottom: 137.4, left: 125.9, right: 114.5 },
-            '2109,1406': { top: 103, bottom: 114.5, left: 137.4, right: 114.5 },
-            '1603,2290': { top: 137.4, bottom: 148.7, left: 137.4, right: 125.9 },
-            '1145,1145': { top: 91.6, bottom: 103, left: 91.6, right: 91.6 },
-            '1374,1374': { top: 103, bottom: 114.5, left: 103, right: 103 },
-            '1603,1603': { top: 114.5, bottom: 125.9, left: 114.5, right: 114.5 },
+            // Fiction / Novella (5" × 8")
+            '1130,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1145,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1832,1145': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
             
-            // Paper Pro Move (264 PPI)
-            '1122,792': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
-            '1320,792': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
-            '1584,792': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
-            '792,792': { top: 66, bottom: 79.2, left: 66, right: 66 }
+            // Fiction (5.25" × 8")
+            '1186,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1202,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1832,1202': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
+            
+            // Digest (5.5" × 8.5")
+            '1260,1947': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.45 },
+            '1947,1260': { top: 0.4, bottom: 0.45, left: 0.55, right: 0.45 },
+            
+            // US Trade (6" × 9")
+            '1374,2061': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
+            '2061,1374': { top: 0.45, bottom: 0.5, left: 0.6, right: 0.5 },
+            
+            // A5 (5.83" × 8.27")
+            '1317,1869': { top: 0.55, bottom: 0.6, left: 0.5, right: 0.5 },
+            '1335,1894': { top: 0.55, bottom: 0.6, left: 0.5, right: 0.5 },
+            '1894,1335': { top: 0.5, bottom: 0.55, left: 0.6, right: 0.5 },
+            
+            // A6 (4.13" × 5.83")
+            '933,1317': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.35 },
+            '946,1335': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.35 },
+            '1317,933': { top: 0.35, bottom: 0.4, left: 0.45, right: 0.35 },
+            '1335,946': { top: 0.35, bottom: 0.4, left: 0.45, right: 0.35 },
+            
+            // UK B-Format (5.07" × 7.8")
+            '1146,1763': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1161,1786': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1786,1161': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
+            
+            // Royal (6.14" × 9.21")
+            '1388,2081': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
+            '1406,2109': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
+            '2109,1406': { top: 0.45, bottom: 0.5, left: 0.6, right: 0.5 },
+            
+            // Square formats
+            '1130,1130': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
+            '1145,1145': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
+            '1356,1356': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.45 },
+            '1374,1374': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.45 },
+            '1603,1603': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.5 },
+            
+            // Paper Pro Move formats
+            '1122,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
+            '1320,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
+            '1584,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
+            '792,792': { top: 0.25, bottom: 0.3, left: 0.25, right: 0.25 }
         };
         
         const marginRecommendations = {
@@ -779,15 +807,55 @@
         window.applyRecommendedMargins = applyRecommendedMargins;
         
         function applyDefaultMargins() {
+            const device = devices[deviceTypeSelect.value];
             const pageSize = pageSizeSelect.value;
-            const margins = defaultMargins[pageSize];
+            const marginsInches = defaultMarginsInches[pageSize];
             
-            if (margins) {
-                marginTopSelect.value = margins.top;
-                marginBottomSelect.value = margins.bottom;
-                marginLeftSelect.value = margins.left;
-                marginRightSelect.value = margins.right;
+            if (marginsInches) {
+                // Convert inches to pixels based on device DPI
+                const topPx = Math.round(marginsInches.top * device.dpi * 100) / 100;
+                const bottomPx = Math.round(marginsInches.bottom * device.dpi * 100) / 100;
+                const leftPx = Math.round(marginsInches.left * device.dpi * 100) / 100;
+                const rightPx = Math.round(marginsInches.right * device.dpi * 100) / 100;
+                
+                marginTopSelect.value = topPx;
+                marginBottomSelect.value = bottomPx;
+                marginLeftSelect.value = leftPx;
+                marginRightSelect.value = rightPx;
             }
+        }
+        
+        function updateMarginDropdowns() {
+            const device = devices[deviceTypeSelect.value];
+            const dpi = device.dpi;
+            
+            // Store current values
+            const currentTop = marginTopSelect.value;
+            const currentBottom = marginBottomSelect.value;
+            const currentLeft = marginLeftSelect.value;
+            const currentRight = marginRightSelect.value;
+            
+            // Clear and repopulate all margin dropdowns
+            const marginSelects = [marginTopSelect, marginBottomSelect, marginLeftSelect, marginRightSelect];
+            
+            marginSelects.forEach(select => {
+                select.innerHTML = '';
+                
+                // Generate options from 0" to 1.5" in 0.05" increments
+                for (let inches = 0; inches <= 1.5; inches += 0.05) {
+                    const pixels = Math.round(inches * dpi * 100) / 100; // Round to 2 decimals
+                    const option = document.createElement('option');
+                    option.value = pixels;
+                    option.textContent = inches.toFixed(2) + '"';
+                    select.appendChild(option);
+                }
+            });
+            
+            // Try to restore previous values or set to defaults
+            marginTopSelect.value = currentTop;
+            marginBottomSelect.value = currentBottom;
+            marginLeftSelect.value = currentLeft;
+            marginRightSelect.value = currentRight;
         }
         
         function updatePageSizes() {
@@ -799,6 +867,9 @@
             
             // Update print page size dynamically
             updatePrintPageSize(device.width, device.height);
+            
+            // Update margin dropdowns for new device DPI
+            updateMarginDropdowns();
             
             pageSizeSelect.innerHTML = '';
             device.sizes.forEach(size => {
@@ -906,6 +977,127 @@
         }
         
         window.printTemplate = printTemplate;
+        
+        function generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType) {
+            // Clear existing SVG content
+            gridSvg.innerHTML = '';
+            gridSvg.style.display = 'none';
+            
+            if (templateType === 'grid') {
+                gridSvg.style.display = 'block';
+                gridSvg.setAttribute('width', pageWidth);
+                gridSvg.setAttribute('height', pageHeight);
+                gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
+                
+                const overlaySize = gridSize * overlayMultiplier;
+                
+                // Draw regular grid lines (vertical)
+                for (let x = gridSize; x < pageWidth; x += gridSize) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('y1', 0);
+                    line.setAttribute('x2', x);
+                    line.setAttribute('y2', pageHeight);
+                    line.setAttribute('stroke', '#d0d0d0');
+                    line.setAttribute('stroke-width', '1.5');
+                    line.setAttribute('shape-rendering', 'crispEdges');
+                    gridSvg.appendChild(line);
+                }
+                
+                // Draw regular grid lines (horizontal)
+                for (let y = gridSize; y < pageHeight; y += gridSize) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', 0);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('x2', pageWidth);
+                    line.setAttribute('y2', y);
+                    line.setAttribute('stroke', '#d0d0d0');
+                    line.setAttribute('stroke-width', '1.5');
+                    line.setAttribute('shape-rendering', 'crispEdges');
+                    gridSvg.appendChild(line);
+                }
+                
+                // Draw overlay grid lines if enabled
+                if (overlayMultiplier > 0) {
+                    // Overlay vertical lines
+                    for (let x = overlaySize; x < pageWidth; x += overlaySize) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x);
+                        line.setAttribute('y1', 0);
+                        line.setAttribute('x2', x);
+                        line.setAttribute('y2', pageHeight);
+                        line.setAttribute('stroke', '#bbb');
+                        line.setAttribute('stroke-width', '2.5');
+                        line.setAttribute('shape-rendering', 'crispEdges');
+                        gridSvg.appendChild(line);
+                    }
+                    
+                    // Overlay horizontal lines
+                    for (let y = overlaySize; y < pageHeight; y += overlaySize) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', 0);
+                        line.setAttribute('y1', y);
+                        line.setAttribute('x2', pageWidth);
+                        line.setAttribute('y2', y);
+                        line.setAttribute('stroke', '#bbb');
+                        line.setAttribute('stroke-width', '2.5');
+                        line.setAttribute('shape-rendering', 'crispEdges');
+                        gridSvg.appendChild(line);
+                    }
+                }
+            } else if (templateType === 'lined') {
+                gridSvg.style.display = 'block';
+                gridSvg.setAttribute('width', pageWidth);
+                gridSvg.setAttribute('height', pageHeight);
+                gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
+                
+                // Draw horizontal lines
+                for (let y = gridSize; y < pageHeight; y += gridSize) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', 0);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('x2', pageWidth);
+                    line.setAttribute('y2', y);
+                    line.setAttribute('stroke', '#d0d0d0');
+                    line.setAttribute('stroke-width', '1');
+                    line.setAttribute('shape-rendering', 'crispEdges');
+                    gridSvg.appendChild(line);
+                }
+            } else if (templateType === 'dot-grid') {
+                gridSvg.style.display = 'block';
+                gridSvg.setAttribute('width', pageWidth);
+                gridSvg.setAttribute('height', pageHeight);
+                gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
+                
+                const overlaySize = gridSize * overlayMultiplier;
+                
+                // Draw regular dots
+                for (let x = gridSize; x < pageWidth; x += gridSize) {
+                    for (let y = gridSize; y < pageHeight; y += gridSize) {
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', x);
+                        circle.setAttribute('cy', y);
+                        circle.setAttribute('r', '1.5');
+                        circle.setAttribute('fill', '#c0c0c0');
+                        gridSvg.appendChild(circle);
+                    }
+                }
+                
+                // Draw overlay dots if enabled
+                if (overlayMultiplier > 0) {
+                    for (let x = overlaySize; x < pageWidth; x += overlaySize) {
+                        for (let y = overlaySize; y < pageHeight; y += overlaySize) {
+                            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            circle.setAttribute('cx', x);
+                            circle.setAttribute('cy', y);
+                            circle.setAttribute('r', '2.5');
+                            circle.setAttribute('fill', '#bbb');
+                            gridSvg.appendChild(circle);
+                        }
+                    }
+                }
+            }
+        }
         
         function updateRulers() {
             const device = devices[deviceTypeSelect.value];
