@@ -97,6 +97,33 @@
             pointer-events: none;
         }
         
+        .margin-label-top {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #666;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            z-index: 4;
+            pointer-events: none;
+            display: none;
+        }
+        
+        .margin-label-right {
+            position: absolute;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            font-size: 10px;
+            color: #666;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            z-index: 4;
+            pointer-events: none;
+            display: none;
+            white-space: nowrap;
+        }
+        
         .ruler-left {
             position: absolute;
             left: 2px;
@@ -457,6 +484,8 @@
                 <option value="327.7">1.45"</option>
                 <option value="339">1.50"</option>
             </select>
+            
+            <span id="usableArea" style="margin-left: 20px; font-weight: bold; color: #007bff;"></span>
         </div>
         
         <div>
@@ -516,21 +545,25 @@
             <label for="showRulers" style="margin-left: 20px;">Show Rulers:</label>
             <input type="checkbox" id="showRulers">
             
+            <label for="showMarginDimensions" style="margin-left: 20px;">Show Wd × Ht:</label>
+            <input type="checkbox" id="showMarginDimensions" checked>
+            
             <button onclick="printTemplate()">Print/Save as PDF</button>
         </div>
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.98</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.103</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
             <li><strong>Binding Type & Platform:</strong> View margin recommendations for different binding types and publishing platforms. Click "Apply Recommended Margins" to use suggested defaults.</li>
-            <li><strong>Margins:</strong> Adjust individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with borders (gray for reMarkable 1/2, red for color devices).</li>
+            <li><strong>Margins:</strong> Adjust individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with borders (gray for reMarkable 1/2, red for color devices). The usable area (width × height inside margins) is displayed next to the Right margin control.</li>
             <li><strong>Template Type:</strong> Select your preferred template style (lined, grid, dot grid, etc.).</li>
             <li><strong>Line/Grid Size:</strong> For lined, grid, or dot-grid templates, choose the spacing in inches (0.05" to 1.25").</li>
             <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares for major/minor grid divisions.</li>
             <li><strong>Show Rulers:</strong> Check this box to display inch measurements along the left and bottom edges (marks every 0.25").</li>
+            <li><strong>Show Wd × Ht:</strong> Check this box to display the usable dimensions within the margin areas (width in top margin, height in right margin).</li>
             <li><strong>Export:</strong> Click "Print/Save as PDF" and select "Save as PDF" in the dialog.</li>
         </ul>
         Transfer the PDF to your reMarkable device via the mobile app or desktop software.
@@ -539,6 +572,8 @@
     <div class="template-container">
         <div id="templatePage" class="template-page">
             <div id="borderOverlay" class="border-overlay"></div>
+            <div id="marginLabelTop" class="margin-label-top"></div>
+            <div id="marginLabelRight" class="margin-label-right"></div>
             <div id="contentArea" class="content-area grid">
                 <svg id="gridSvg" class="grid-svg"></svg>
                 <div id="urlText" class="url-text">https://srives.github.io/reMarkable/</div>
@@ -562,6 +597,7 @@
         const gridSizeSelect = document.getElementById('gridSize');
         const overlayGridSelect = document.getElementById('overlayGrid');
         const showRulersCheckbox = document.getElementById('showRulers');
+        const showMarginDimensionsCheckbox = document.getElementById('showMarginDimensions');
         const gridSizeLabel = document.getElementById('gridSizeLabel');
         const overlayGridLabel = document.getElementById('overlayGridLabel');
         const contentArea = document.getElementById('contentArea');
@@ -574,6 +610,9 @@
         const rulerLeft = document.getElementById('rulerLeft');
         const rulerBottom = document.getElementById('rulerBottom');
         const gridSvg = document.getElementById('gridSvg');
+        const usableArea = document.getElementById('usableArea');
+        const marginLabelTop = document.getElementById('marginLabelTop');
+        const marginLabelRight = document.getElementById('marginLabelRight');
         
         const devices = {
             rm2: {
@@ -928,7 +967,7 @@
                     line.setAttribute('y1', 0);
                     line.setAttribute('x2', x);
                     line.setAttribute('y2', pageHeight);
-                    line.setAttribute('stroke', '#b0b0b0');
+                    line.setAttribute('stroke', '#d0d0d0');
                     line.setAttribute('stroke-width', '2');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
@@ -953,7 +992,7 @@
                         line.setAttribute('y1', 0);
                         line.setAttribute('x2', x);
                         line.setAttribute('y2', pageHeight);
-                        line.setAttribute('stroke', '#808080');
+                        line.setAttribute('stroke', '#b0b0b0');
                         line.setAttribute('stroke-width', '3');
                         line.setAttribute('shape-rendering', 'crispEdges');
                         gridSvg.appendChild(line);
@@ -983,7 +1022,7 @@
                     line.setAttribute('y1', y);
                     line.setAttribute('x2', pageWidth);
                     line.setAttribute('y2', y);
-                    line.setAttribute('stroke', '#b0b0b0');
+                    line.setAttribute('stroke', '#d0d0d0');
                     line.setAttribute('stroke-width', '1.5');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
@@ -1002,7 +1041,7 @@
                         circle.setAttribute('cx', x);
                         circle.setAttribute('cy', y);
                         circle.setAttribute('r', '2');
-                        circle.setAttribute('fill', '#a0a0a0');
+                        circle.setAttribute('fill', '#c0c0c0');
                         gridSvg.appendChild(circle);
                     }
                 }
@@ -1014,7 +1053,7 @@
                             circle.setAttribute('cx', x);
                             circle.setAttribute('cy', y);
                             circle.setAttribute('r', '3');
-                            circle.setAttribute('fill', '#808080');
+                            circle.setAttribute('fill', '#a0a0a0');
                             gridSvg.appendChild(circle);
                         }
                     }
@@ -1056,6 +1095,26 @@
                 rulerLeft.style.display = 'none';
                 rulerBottom.style.display = 'none';
             }
+        }
+        
+        function updateUsableArea() {
+            const device = devices[deviceTypeSelect.value];
+            const [pageWidth, pageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const marginTop = parseFloat(marginTopSelect.value);
+            const marginBottom = parseFloat(marginBottomSelect.value);
+            const marginLeft = parseFloat(marginLeftSelect.value);
+            const marginRight = parseFloat(marginRightSelect.value);
+            
+            // Calculate usable area in pixels
+            const usableWidthPx = pageWidth - marginLeft - marginRight;
+            const usableHeightPx = pageHeight - marginTop - marginBottom;
+            
+            // Convert to inches
+            const usableWidthIn = usableWidthPx / device.dpi;
+            const usableHeightIn = usableHeightPx / device.dpi;
+            
+            // Display the result
+            usableArea.textContent = `Usable Area: ${usableWidthIn.toFixed(2)}" × ${usableHeightIn.toFixed(2)}"`;
         }
         
         function updateTemplate() {
@@ -1132,7 +1191,36 @@
                 urlText.style.display = 'none';
             }
             
+            // Update margin labels
+            const usableWidthPx = pageWidth - marginLeft - marginRight;
+            const usableHeightPx = pageHeight - marginTop - marginBottom;
+            const usableWidthIn = usableWidthPx / device.dpi;
+            const usableHeightIn = usableHeightPx / device.dpi;
+            
+            const showDimensions = showMarginDimensionsCheckbox.checked;
+            
+            // Top margin label - show usable width in the top margin area
+            if (showDimensions && marginTop >= 20) {
+                marginLabelTop.textContent = `${usableWidthIn.toFixed(2)}"`;
+                marginLabelTop.style.display = 'block';
+                marginLabelTop.style.top = (offsetY + marginTop / 2) + 'px';
+                marginLabelTop.style.left = (offsetX + pageWidth / 2) + 'px';
+            } else {
+                marginLabelTop.style.display = 'none';
+            }
+            
+            // Right margin label - show usable height in the right margin area (vertical)
+            if (showDimensions && marginRight >= 20) {
+                marginLabelRight.textContent = `${usableHeightIn.toFixed(2)}"`;
+                marginLabelRight.style.display = 'block';
+                marginLabelRight.style.top = (offsetY + pageHeight / 2) + 'px';
+                marginLabelRight.style.left = (offsetX + pageWidth - marginRight / 2) + 'px';
+            } else {
+                marginLabelRight.style.display = 'none';
+            }
+            
             updateRulers();
+            updateUsableArea();
         }
         
         deviceTypeSelect.addEventListener('change', updatePageSizes);
@@ -1150,9 +1238,11 @@
         gridSizeSelect.addEventListener('change', updateTemplate);
         overlayGridSelect.addEventListener('change', updateTemplate);
         showRulersCheckbox.addEventListener('change', updateRulers);
+        showMarginDimensionsCheckbox.addEventListener('change', updateTemplate);
         
         updatePageSizes();
         updateRecommendation();
+        updateUsableArea();
     </script>
 </body>
 </html>
