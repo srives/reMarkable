@@ -49,7 +49,6 @@
             margin: 0 auto;
         }
         
-        /* Template page - dimensions will be updated dynamically */
         .template-page {
             width: 1872px;
             height: 1404px;
@@ -96,27 +95,22 @@
             pointer-events: none;
         }
         
-        /* Lined template - will be updated dynamically */
         .lined {
             background-color: white;
         }
         
-        /* Grid template - will be updated dynamically */
         .grid {
             background-color: white;
         }
         
-        /* Dot grid template - will be updated dynamically */
         .dot-grid {
             background-color: white;
         }
         
-        /* Blank template */
         .blank {
             background: white;
         }
         
-        /* Cornell notes */
         .cornell {
             background: white;
             position: relative;
@@ -142,7 +136,6 @@
             background: #c0c0c0;
         }
         
-        /* Music staff */
         .music {
             background-image: repeating-linear-gradient(
                 transparent,
@@ -209,6 +202,7 @@
     <div class="controls">
         <h2 style="margin: 0 0 5px 0; color: #333; text-align: center; font-style: italic; font-weight: normal;">Rives' reMarkable Book Publishing Template</h2>
         <p style="margin: 0 0 15px 0; color: #666; text-align: center; font-size: 14px;">Suitable for writing on the reMarkable</p>
+        
         <div style="margin-bottom: 10px;">
             <label for="deviceType">Device:</label>
             <select id="deviceType">
@@ -220,12 +214,38 @@
             <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
             <select id="pageSize">
                 <option value="1872,1404">Full reMarkable Pro (8.27" × 6.20")</option>
-                <option value="1869,1317">A5 Landscape (8.27" × 5.83")</option>
-                <option value="933,1317">A6 Portrait (4.13" × 5.83")</option>
-                <option value="1317,933">A6 Landscape (5.83" × 4.13")</option>
-                <option value="1356,1243">US Trade Landscape (6" × 5.5")</option>
-                <option value="1243,904">Digest Landscape (5.5" × 4")</option>
             </select>
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="bindingType">Binding Type:</label>
+            <select id="bindingType">
+                <option value="perfect">Perfect Binding (Glued)</option>
+                <option value="saddle">Saddle Stitch (Stapled)</option>
+                <option value="spiral">Spiral/Coil Binding</option>
+                <option value="wireo">Wire-O Binding</option>
+                <option value="case">Case Binding (Hardcover)</option>
+            </select>
+            
+            <label for="platform" style="margin-left: 20px;">Platform:</label>
+            <select id="platform">
+                <option value="general">General Publishing</option>
+                <option value="kdp">Amazon KDP</option>
+                <option value="ingram">IngramSpark</option>
+                <option value="lulu">Lulu</option>
+                <option value="bn">Barnes & Noble Press</option>
+                <option value="d2d">Draft2Digital</option>
+                <option value="blurb">Blurb</option>
+                <option value="bookbaby">BookBaby</option>
+            </select>
+        </div>
+        
+        <div id="marginRecommendation" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px; font-size: 13px; display: none;">
+            <strong>Recommended Margins:</strong> <span id="recommendationText"></span>
+        </div>
+        
+        <div style="margin-bottom: 10px; text-align: right;">
+            <button onclick="applyRecommendedMargins()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #28a745; color: white; cursor: pointer;">Apply Recommendations</button>
         </div>
         
         <div style="margin-bottom: 10px;">
@@ -432,11 +452,12 @@
         <strong>Instructions:</strong> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
-            <li><strong>Page Size:</strong> Select your target book/page size. The template will center it and gray out the border area.</li>
-            <li><strong>Margins:</strong> Set individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with light red borders.</li>
+            <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
+            <li><strong>Binding Type & Platform:</strong> View margin recommendations for different binding types and publishing platforms. Click "Apply Recommended Margins" to use suggested defaults.</li>
+            <li><strong>Margins:</strong> Adjust individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with borders (gray for reMarkable 1/2, red for color devices).</li>
             <li><strong>Template Type:</strong> Select your preferred template style (lined, grid, dot grid, etc.).</li>
             <li><strong>Line/Grid Size:</strong> For lined, grid, or dot-grid templates, choose the spacing in inches (0.05" to 1.25").</li>
-            <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares (e.g., "5 squares" creates bold lines every 5 grid squares).</li>
+            <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares for major/minor grid divisions.</li>
             <li><strong>Export:</strong> Click "Print/Save as PDF" and select "Save as PDF" in the dialog.</li>
         </ul>
         Transfer the PDF to your reMarkable device via the mobile app or desktop software.
@@ -456,6 +477,8 @@
         const deviceTypeSelect = document.getElementById('deviceType');
         const templateTypeSelect = document.getElementById('templateType');
         const pageSizeSelect = document.getElementById('pageSize');
+        const bindingTypeSelect = document.getElementById('bindingType');
+        const platformSelect = document.getElementById('platform');
         const marginTopSelect = document.getElementById('marginTop');
         const marginBottomSelect = document.getElementById('marginBottom');
         const marginLeftSelect = document.getElementById('marginLeft');
@@ -469,8 +492,9 @@
         const marginLines = document.getElementById('marginLines');
         const templatePage = document.getElementById('templatePage');
         const urlText = document.getElementById('urlText');
+        const marginRecommendation = document.getElementById('marginRecommendation');
+        const recommendationText = document.getElementById('recommendationText');
         
-        // Device specifications
         const devices = {
             rm2: {
                 name: 'reMarkable 1/2',
@@ -516,15 +540,125 @@
             }
         };
         
+        const defaultMargins = {
+            '1872,1404': { top: 135.6, bottom: 146.9, left: 135.6, right: 135.6 },
+            '1869,1317': { top: 124.3, bottom: 135.6, left: 135.6, right: 113 },
+            '933,1317': { top: 113, bottom: 124.3, left: 90.4, right: 90.4 },
+            '1317,933': { top: 90.4, bottom: 101.7, left: 113, right: 90.4 },
+            '1356,1243': { top: 113, bottom: 135.6, left: 135.6, right: 113 },
+            '1243,904': { top: 101.7, bottom: 113, left: 113, right: 90.4 },
+            '1696,954': { top: 79.2, bottom: 92.4, left: 92.4, right: 79.2 },
+            '1540,880': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
+            '1320,768': { top: 66, bottom: 79.2, left: 66, right: 66 },
+            '1090,768': { top: 66, bottom: 79.2, left: 66, right: 66 },
+            '1188,864': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
+            '1056,768': { top: 66, bottom: 79.2, left: 66, right: 66 }
+        };
+        
+        const marginRecommendations = {
+            binding: {
+                perfect: {
+                    name: "Perfect Binding",
+                    desc: "Inner/gutter margin should be 0.625\"-0.75\" to account for spine curve. Top: 0.5\"-0.625\", Bottom: 0.625\"-0.75\" (larger than top), Outer: 0.5\"-0.625\"."
+                },
+                saddle: {
+                    name: "Saddle Stitch",
+                    desc: "Can use smaller, more equal margins since pages lie flatter. All margins: 0.375\"-0.5\". Inner margin can be slightly smaller than perfect binding."
+                },
+                spiral: {
+                    name: "Spiral/Coil Binding",
+                    desc: "Inner margin needs 0.5\"-0.75\" for binding holes. Other margins: 0.375\"-0.5\". Pages lie completely flat."
+                },
+                wireo: {
+                    name: "Wire-O Binding",
+                    desc: "Similar to spiral. Inner margin: 0.5\"-0.75\" for wire. Other margins: 0.375\"-0.5\". Pages lay flat and can flip 360°."
+                },
+                case: {
+                    name: "Case Binding (Hardcover)",
+                    desc: "More generous margins due to rigid cover. Inner/gutter: 0.75\"-1\", Top: 0.625\"-0.75\", Bottom: 0.75\"-0.875\", Outer: 0.625\"-0.75\"."
+                }
+            },
+            platform: {
+                general: {
+                    name: "General Publishing",
+                    desc: "Standard industry practice: Inner 0.625\"-0.75\", Top 0.5\"-0.625\", Bottom 0.625\"-0.75\", Outer 0.5\"-0.625\". Bottom margin typically largest."
+                },
+                kdp: {
+                    name: "Amazon KDP",
+                    desc: "Minimum 0.25\" all sides, but 0.375\"-0.5\" recommended. For books under 150 pages: 0.375\" minimum. 150-400 pages: 0.5\" minimum. Over 400 pages: 0.625\" minimum inner margin."
+                },
+                ingram: {
+                    name: "IngramSpark",
+                    desc: "Minimum 0.5\" inside margin required. Recommends: Inside 0.625\"-0.75\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Add 0.125\" per 100 pages for spine thickness."
+                },
+                lulu: {
+                    name: "Lulu",
+                    desc: "Minimum 0.25\" all sides. Recommended: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". For perfect binding, suggest 0.75\" inside margin."
+                },
+                bn: {
+                    name: "Barnes & Noble Press",
+                    desc: "Minimum 0.375\" all sides. Recommended: Inside 0.5\"-0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Add more for larger page counts."
+                },
+                d2d: {
+                    name: "Draft2Digital",
+                    desc: "Works with multiple print partners. Safe margins: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Follows KDP guidelines generally."
+                },
+                blurb: {
+                    name: "Blurb",
+                    desc: "Varies by book type. Standard: 0.5\" minimum all sides. Trade books: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Photo books can be smaller."
+                },
+                bookbaby: {
+                    name: "BookBaby",
+                    desc: "Minimum 0.5\" all sides recommended. Professional standard: Inside 0.75\", Outside 0.5\", Top 0.625\", Bottom 0.75\". More generous for premium appearance."
+                }
+            }
+        };
+        
+        function updateRecommendation() {
+            const binding = marginRecommendations.binding[bindingTypeSelect.value];
+            const platform = marginRecommendations.platform[platformSelect.value];
+            
+            recommendationText.innerHTML = `
+                <div style="margin-bottom: 8px;"><strong>${binding.name}:</strong> ${binding.desc}</div>
+                <div><strong>${platform.name}:</strong> ${platform.desc}</div>
+            `;
+            marginRecommendation.style.display = 'block';
+        }
+        
+        function applyRecommendedMargins() {
+            const pageSize = pageSizeSelect.value;
+            const margins = defaultMargins[pageSize];
+            
+            if (margins) {
+                marginTopSelect.value = margins.top;
+                marginBottomSelect.value = margins.bottom;
+                marginLeftSelect.value = margins.left;
+                marginRightSelect.value = margins.right;
+                updateTemplate();
+            }
+        }
+        
+        window.applyRecommendedMargins = applyRecommendedMargins;
+        
+        function applyDefaultMargins() {
+            const pageSize = pageSizeSelect.value;
+            const margins = defaultMargins[pageSize];
+            
+            if (margins) {
+                marginTopSelect.value = margins.top;
+                marginBottomSelect.value = margins.bottom;
+                marginLeftSelect.value = margins.left;
+                marginRightSelect.value = margins.right;
+            }
+        }
+        
         function updatePageSizes() {
             const device = devices[deviceTypeSelect.value];
             const currentValue = pageSizeSelect.value;
             
-            // Update template page dimensions
             templatePage.style.width = device.width + 'px';
             templatePage.style.height = device.height + 'px';
             
-            // Clear and repopulate page size options
             pageSizeSelect.innerHTML = '';
             device.sizes.forEach(size => {
                 const option = document.createElement('option');
@@ -533,7 +667,6 @@
                 pageSizeSelect.appendChild(option);
             });
             
-            // Try to maintain similar selection or default to first
             const sameIndex = device.sizes.findIndex(s => s.value === currentValue);
             if (sameIndex >= 0) {
                 pageSizeSelect.selectedIndex = sameIndex;
@@ -541,6 +674,7 @@
                 pageSizeSelect.selectedIndex = 0;
             }
             
+            applyDefaultMargins();
             updateTemplate();
         }
         
@@ -555,7 +689,6 @@
             const overlayMultiplier = parseInt(overlayGridSelect.value);
             const templateType = templateTypeSelect.value;
             
-            // Update content area size and position (centered)
             const offsetX = (device.width - pageWidth) / 2;
             const offsetY = (device.height - pageHeight) / 2;
             
@@ -564,7 +697,6 @@
             contentArea.style.left = offsetX + 'px';
             contentArea.style.top = offsetY + 'px';
             
-            // Update border overlay (gray out areas outside the page)
             if (offsetX > 0 || offsetY > 0) {
                 borderOverlay.style.boxShadow = `
                     inset ${offsetX}px 0 0 rgba(0,0,0,0.15),
@@ -576,10 +708,8 @@
                 borderOverlay.style.boxShadow = 'none';
             }
             
-            // Update template type
             contentArea.className = 'content-area ' + templateType;
             
-            // Show/hide grid size and overlay based on template type
             if (templateType === 'lined' || templateType === 'grid' || templateType === 'dot-grid') {
                 gridSizeSelect.style.display = 'inline-block';
                 gridSizeLabel.style.display = 'inline';
@@ -588,7 +718,6 @@
                 gridSizeLabel.style.display = 'none';
             }
             
-            // Show overlay only for grid and dot-grid
             if (templateType === 'grid' || templateType === 'dot-grid') {
                 overlayGridSelect.style.display = 'inline-block';
                 overlayGridLabel.style.display = 'inline';
@@ -597,7 +726,6 @@
                 overlayGridLabel.style.display = 'none';
             }
             
-            // Update grid/dot-grid/lined size dynamically
             if (templateType === 'lined') {
                 const lineSpacing = gridSize - 1;
                 contentArea.style.backgroundImage = `
@@ -616,7 +744,6 @@
                     repeating-linear-gradient(90deg, #e0e0e0 0px, #e0e0e0 1px, transparent 1px, transparent ${gridSize}px)
                 `;
                 
-                // Add overlay grid if multiplier is set
                 if (overlayMultiplier > 0) {
                     backgroundImages = `
                         repeating-linear-gradient(0deg, #ddd 0px, #ddd 2px, transparent 2px, transparent ${overlaySize}px),
@@ -631,7 +758,6 @@
                 let backgroundImages = `radial-gradient(circle, #c0c0c0 1.5px, transparent 1.5px)`;
                 let backgroundSizes = `${gridSize}px ${gridSize}px`;
                 
-                // Add overlay dots if multiplier is set
                 if (overlayMultiplier > 0) {
                     backgroundImages = `
                         radial-gradient(circle, #bbb 2.5px, transparent 2.5px),
@@ -646,7 +772,6 @@
                 contentArea.style.backgroundSize = '';
             }
             
-            // Update margin lines with individual margins
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
                 marginLines.style.borderTopWidth = marginTop + 'px';
                 marginLines.style.borderBottomWidth = marginBottom + 'px';
@@ -654,7 +779,6 @@
                 marginLines.style.borderRightWidth = marginRight + 'px';
                 marginLines.style.borderStyle = 'solid';
                 
-                // Use grayscale for reMarkable 1/2 (no color support), color for other devices
                 if (deviceTypeSelect.value === 'rm2') {
                     marginLines.style.borderColor = 'rgba(100, 100, 100, 0.4)';
                 } else {
@@ -666,7 +790,6 @@
                 marginLines.style.display = 'none';
             }
             
-            // Show URL text only if there's a top margin
             if (marginTop >= 15) {
                 urlText.style.display = 'block';
             } else {
@@ -676,7 +799,12 @@
         
         deviceTypeSelect.addEventListener('change', updatePageSizes);
         templateTypeSelect.addEventListener('change', updateTemplate);
-        pageSizeSelect.addEventListener('change', updateTemplate);
+        pageSizeSelect.addEventListener('change', () => {
+            applyDefaultMargins();
+            updateTemplate();
+        });
+        bindingTypeSelect.addEventListener('change', updateRecommendation);
+        platformSelect.addEventListener('change', updateRecommendation);
         marginTopSelect.addEventListener('change', updateTemplate);
         marginBottomSelect.addEventListener('change', updateTemplate);
         marginLeftSelect.addEventListener('change', updateTemplate);
@@ -684,8 +812,8 @@
         gridSizeSelect.addEventListener('change', updateTemplate);
         overlayGridSelect.addEventListener('change', updateTemplate);
         
-        // Initial update
         updatePageSizes();
+        updateRecommendation();
     </script>
 </body>
 </html>
