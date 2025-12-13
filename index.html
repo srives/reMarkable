@@ -180,6 +180,8 @@
             
             .template-container {
                 box-shadow: none;
+                margin: 0;
+                padding: 0;
             }
             
             .template-page {
@@ -238,14 +240,12 @@
                 <option value="blurb">Blurb</option>
                 <option value="bookbaby">BookBaby</option>
             </select>
+            
+            <button onclick="applyRecommendedMargins()" style="margin-left: 20px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #28a745; color: white; cursor: pointer;">Apply Margin Recommendations</button>
         </div>
         
         <div id="marginRecommendation" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px; font-size: 13px; display: none;">
             <strong>Recommended Margins:</strong> <span id="recommendationText"></span>
-        </div>
-        
-        <div style="margin-bottom: 10px; text-align: right;">
-            <button onclick="applyRecommendedMargins()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #28a745; color: white; cursor: pointer;">Apply Recommendations</button>
         </div>
         
         <div style="margin-bottom: 10px;">
@@ -394,8 +394,8 @@
             <label for="templateType">Template Type:</label>
             <select id="templateType">
                 <option value="blank">Blank</option>
-                <option value="lined" selected>Lined</option>
-                <option value="grid">Grid</option>
+                <option value="lined">Lined</option>
+                <option value="grid" selected>Grid</option>
                 <option value="dot-grid">Dot Grid</option>
                 <option value="cornell">Cornell Notes</option>
                 <option value="music">Music Staff</option>
@@ -466,7 +466,7 @@
     <div class="template-container">
         <div id="templatePage" class="template-page">
             <div id="borderOverlay" class="border-overlay"></div>
-            <div id="contentArea" class="content-area lined">
+            <div id="contentArea" class="content-area grid">
                 <div id="urlText" class="url-text">https://srives.github.io/reMarkable/</div>
                 <div id="marginLines" class="margin-lines"></div>
             </div>
@@ -659,6 +659,9 @@
             templatePage.style.width = device.width + 'px';
             templatePage.style.height = device.height + 'px';
             
+            // Update print page size dynamically
+            updatePrintPageSize(device.width, device.height);
+            
             pageSizeSelect.innerHTML = '';
             device.sizes.forEach(size => {
                 const option = document.createElement('option');
@@ -676,6 +679,35 @@
             
             applyDefaultMargins();
             updateTemplate();
+        }
+        
+        function updatePrintPageSize(width, height) {
+            // Remove existing print style if it exists
+            const existingStyle = document.getElementById('dynamic-print-style');
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+            
+            // Create new style element for print page size
+            const style = document.createElement('style');
+            style.id = 'dynamic-print-style';
+            style.textContent = `
+                @media print {
+                    @page {
+                        size: ${width}px ${height}px;
+                        margin: 0;
+                    }
+                    body {
+                        width: ${width}px;
+                        height: ${height}px;
+                    }
+                    .template-page {
+                        width: ${width}px !important;
+                        height: ${height}px !important;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
         
         function updateTemplate() {
@@ -812,6 +844,7 @@
         gridSizeSelect.addEventListener('change', updateTemplate);
         overlayGridSelect.addEventListener('change', updateTemplate);
         
+        // Initialize
         updatePageSizes();
         updateRecommendation();
     </script>
