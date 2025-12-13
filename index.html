@@ -97,6 +97,49 @@
             pointer-events: none;
         }
         
+        .ruler-left {
+            position: absolute;
+            left: 2px;
+            top: 0;
+            bottom: 0;
+            width: 20px;
+            font-size: 7px;
+            font-family: Arial, sans-serif;
+            color: #666;
+            z-index: 3;
+            pointer-events: none;
+            display: none;
+        }
+        
+        .ruler-bottom {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 2px;
+            height: 20px;
+            font-size: 7px;
+            font-family: Arial, sans-serif;
+            color: #666;
+            z-index: 3;
+            pointer-events: none;
+            display: none;
+        }
+        
+        .ruler-mark {
+            position: absolute;
+            white-space: nowrap;
+        }
+        
+        .ruler-left .ruler-mark {
+            left: 0;
+            transform: translateY(-50%);
+        }
+        
+        .ruler-bottom .ruler-mark {
+            bottom: 0;
+            transform: translateX(-50%);
+        }
+        
         .lined {
             background-color: white;
         }
@@ -196,6 +239,12 @@
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
             }
+            
+            .ruler-left, .ruler-bottom {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
         }
         
         .info {
@@ -223,7 +272,7 @@
             
             <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
             <select id="pageSize">
-                <option value="1872,1404">Full reMarkable Pro (8.27" × 6.20")</option>
+                <option value="1620,2160">Full reMarkable Pro (7.07" × 9.43")</option>
             </select>
         </div>
         
@@ -452,6 +501,9 @@
                 <option value="10">10 squares</option>
             </select>
             
+            <label for="showRulers" style="margin-left: 20px;">Show Rulers:</label>
+            <input type="checkbox" id="showRulers">
+            
             <button onclick="printTemplate()">Print/Save as PDF</button>
         </div>
     </div>
@@ -466,6 +518,7 @@
             <li><strong>Template Type:</strong> Select your preferred template style (lined, grid, dot grid, etc.).</li>
             <li><strong>Line/Grid Size:</strong> For lined, grid, or dot-grid templates, choose the spacing in inches (0.05" to 1.25").</li>
             <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares for major/minor grid divisions.</li>
+            <li><strong>Show Rulers:</strong> Check this box to display inch measurements along the left and bottom edges (marks every 0.25").</li>
             <li><strong>Export:</strong> Click "Print/Save as PDF" and select "Save as PDF" in the dialog.</li>
         </ul>
         Transfer the PDF to your reMarkable device via the mobile app or desktop software.
@@ -476,6 +529,8 @@
             <div id="borderOverlay" class="border-overlay"></div>
             <div id="contentArea" class="content-area grid">
                 <div id="urlText" class="url-text">https://srives.github.io/reMarkable/</div>
+                <div id="rulerLeft" class="ruler-left"></div>
+                <div id="rulerBottom" class="ruler-bottom"></div>
                 <div id="marginLines" class="margin-lines"></div>
             </div>
         </div>
@@ -493,6 +548,7 @@
         const marginRightSelect = document.getElementById('marginRight');
         const gridSizeSelect = document.getElementById('gridSize');
         const overlayGridSelect = document.getElementById('overlayGrid');
+        const showRulersCheckbox = document.getElementById('showRulers');
         const gridSizeLabel = document.getElementById('gridSizeLabel');
         const overlayGridLabel = document.getElementById('overlayGridLabel');
         const contentArea = document.getElementById('contentArea');
@@ -502,84 +558,73 @@
         const urlText = document.getElementById('urlText');
         const marginRecommendation = document.getElementById('marginRecommendation');
         const recommendationText = document.getElementById('recommendationText');
+        const rulerLeft = document.getElementById('rulerLeft');
+        const rulerBottom = document.getElementById('rulerBottom');
         
         const devices = {
             rm2: {
                 name: 'reMarkable 1/2',
-                width: 1872,
-                height: 1404,
+                width: 1404,
+                height: 1872,
                 dpi: 226,
                 sizes: [
-                    { value: '1872,1404', label: 'Full reMarkable 1/2 (8.27" × 6.20")' },
-                    // Mass Market
-                    { value: '961,1553', label: 'Mass Market / Pocket Book Portrait (4.25" × 6.87")' },
-                    { value: '1553,961', label: 'Mass Market / Pocket Book Landscape (6.87" × 4.25")' },
-                    // Fiction & Novellas
-                    { value: '1130,1808', label: 'Fiction / Novella Portrait (5" × 8")' },
-                    { value: '1808,1130', label: 'Fiction / Novella Landscape (8" × 5")' },
+                    { value: '1404,1872', label: 'Full reMarkable 1/2 (6.21" × 8.28")' },
+                    // Mass Market (4.25" × 6.87")
+                    { value: '961,1553', label: 'Mass Market Portrait (4.25" × 6.87")' },
+                    // Fiction & Novellas (5" × 8")
+                    { value: '1130,1808', label: 'Fiction Portrait (5" × 8")' },
+                    // Fiction (5.25" × 8")
                     { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
-                    { value: '1808,1186', label: 'Fiction Landscape (8" × 5.25")' },
-                    { value: '1243,1921', label: 'Digest Portrait (5.5" × 8.5")' },
-                    { value: '1921,1243', label: 'Digest Landscape (8.5" × 5.5")' },
-                    { value: '1356,2034', label: 'US Trade Portrait (6" × 9")' },
-                    { value: '2034,1356', label: 'US Trade Landscape (9" × 6")' },
                     // A-Series
                     { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
-                    { value: '1869,1317', label: 'A5 Landscape (8.27" × 5.83")' },
                     { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
                     { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
-                    // UK B-Format
+                    // UK B-Format (5.07" × 7.8")
                     { value: '1146,1763', label: 'UK B-Format Portrait (5.07" × 7.8")' },
-                    { value: '1763,1146', label: 'UK B-Format Landscape (7.8" × 5.07")' },
-                    // Royal
+                    // Royal (6.14" × 9.21") - too tall
                     { value: '1388,2081', label: 'Royal Portrait (6.14" × 9.21")' },
-                    // Non-Fiction & Children's
-                    { value: '1582,2260', label: 'Non-Fiction / Children\'s Portrait (7" × 10")' },
-                    { value: '1808,2260', label: 'Large Format Portrait (8" × 10")' },
-                    { value: '1921,2486', label: 'Textbook / Manual Portrait (8.5" × 11")' },
                     // Square formats
-                    { value: '1582,1582', label: 'Square Small (7" × 7")' },
-                    { value: '1808,1808', label: 'Square Medium (8" × 8")' },
-                    { value: '1921,1921', label: 'Square Large (8.5" × 8.5")' }
+                    { value: '1130,1130', label: 'Square (5" × 5")' },
+                    { value: '1356,1356', label: 'Square (6" × 6")' }
                 ]
             },
             rmpro: {
                 name: 'reMarkable Pro',
-                width: 1872,
-                height: 1404,
-                dpi: 226,
+                width: 1620,
+                height: 2160,
+                dpi: 229,
                 sizes: [
-                    { value: '1872,1404', label: 'Full reMarkable Pro (8.27" × 6.20")' },
-                    // Mass Market
-                    { value: '961,1553', label: 'Mass Market / Pocket Book Portrait (4.25" × 6.87")' },
-                    { value: '1553,961', label: 'Mass Market / Pocket Book Landscape (6.87" × 4.25")' },
-                    // Fiction & Novellas
-                    { value: '1130,1808', label: 'Fiction / Novella Portrait (5" × 8")' },
-                    { value: '1808,1130', label: 'Fiction / Novella Landscape (8" × 5")' },
-                    { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
-                    { value: '1808,1186', label: 'Fiction Landscape (8" × 5.25")' },
-                    { value: '1243,1921', label: 'Digest Portrait (5.5" × 8.5")' },
-                    { value: '1921,1243', label: 'Digest Landscape (8.5" × 5.5")' },
-                    { value: '1356,2034', label: 'US Trade Portrait (6" × 9")' },
-                    { value: '2034,1356', label: 'US Trade Landscape (9" × 6")' },
+                    { value: '1620,2160', label: 'Full reMarkable Pro (7.07" × 9.43")' },
+                    // Mass Market (4.25" × 6.87")
+                    { value: '973,1573', label: 'Mass Market Portrait (4.25" × 6.87")' },
+                    { value: '1573,973', label: 'Mass Market Landscape (6.87" × 4.25")' },
+                    // Fiction & Novellas (5" × 8")
+                    { value: '1145,1832', label: 'Fiction Portrait (5" × 8")' },
+                    { value: '1832,1145', label: 'Fiction Landscape (8" × 5")' },
+                    // Fiction (5.25" × 8")
+                    { value: '1202,1832', label: 'Fiction Portrait (5.25" × 8")' },
+                    { value: '1832,1202', label: 'Fiction Landscape (8" × 5.25")' },
+                    // Digest (5.5" × 8.5")
+                    { value: '1260,1947', label: 'Digest Portrait (5.5" × 8.5")' },
+                    { value: '1947,1260', label: 'Digest Landscape (8.5" × 5.5")' },
+                    // US Trade (6" × 9")
+                    { value: '1374,2061', label: 'US Trade Portrait (6" × 9")' },
+                    { value: '2061,1374', label: 'US Trade Landscape (9" × 6")' },
                     // A-Series
-                    { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
-                    { value: '1869,1317', label: 'A5 Landscape (8.27" × 5.83")' },
-                    { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
-                    { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
-                    // UK B-Format
-                    { value: '1146,1763', label: 'UK B-Format Portrait (5.07" × 7.8")' },
-                    { value: '1763,1146', label: 'UK B-Format Landscape (7.8" × 5.07")' },
-                    // Royal
-                    { value: '1388,2081', label: 'Royal Portrait (6.14" × 9.21")' },
-                    // Non-Fiction & Children's
-                    { value: '1582,2260', label: 'Non-Fiction / Children\'s Portrait (7" × 10")' },
-                    { value: '1808,2260', label: 'Large Format Portrait (8" × 10")' },
-                    { value: '1921,2486', label: 'Textbook / Manual Portrait (8.5" × 11")' },
+                    { value: '1335,1894', label: 'A5 Portrait (5.83" × 8.27")' },
+                    { value: '1894,1335', label: 'A5 Landscape (8.27" × 5.83")' },
+                    { value: '946,1335', label: 'A6 Portrait (4.13" × 5.83")' },
+                    { value: '1335,946', label: 'A6 Landscape (5.83" × 4.13")' },
+                    // UK B-Format (5.07" × 7.8")
+                    { value: '1161,1786', label: 'UK B-Format Portrait (5.07" × 7.8")' },
+                    { value: '1786,1161', label: 'UK B-Format Landscape (7.8" × 5.07")' },
+                    // Royal (6.14" × 9.21")
+                    { value: '1406,2109', label: 'Royal Portrait (6.14" × 9.21")' },
+                    { value: '2109,1406', label: 'Royal Landscape (9.21" × 6.14")' },
                     // Square formats
-                    { value: '1582,1582', label: 'Square Small (7" × 7")' },
-                    { value: '1808,1808', label: 'Square Medium (8" × 8")' },
-                    { value: '1921,1921', label: 'Square Large (8.5" × 8.5")' }
+                    { value: '1145,1145', label: 'Square (5" × 5")' },
+                    { value: '1374,1374', label: 'Square (6" × 6")' },
+                    { value: '1603,1603', label: 'Square (7" × 7")' }
                 ]
             },
             paperpromove: {
@@ -589,91 +634,63 @@
                 dpi: 264,
                 sizes: [
                     { value: '1696,954', label: 'Full Paper Pro Move (6.42" × 3.61")' },
-                    // Compact sizes that fit
-                    { value: '1122,1814', label: 'Mass Market Portrait (4.25" × 6.87")' },
-                    { value: '1320,2112', label: 'Fiction Portrait (5" × 8")' },
-                    { value: '1386,2112', label: 'Fiction Portrait (5.25" × 8")' },
-                    { value: '1452,2244', label: 'Digest Portrait (5.5" × 8.5")' },
-                    { value: '1584,2376', label: 'US Trade Portrait (6" × 9")' },
-                    // A-Series
-                    { value: '1540,2185', label: 'A5 Portrait (5.83" × 8.27")' },
-                    { value: '1090,1540', label: 'A6 Portrait (4.13" × 5.83")' },
-                    { value: '1540,1090', label: 'A6 Landscape (5.83" × 4.13")' },
-                    // UK Format
-                    { value: '1339,2059', label: 'UK B-Format Portrait (5.07" × 7.8")' },
-                    // Compact formats
-                    { value: '1056,792', label: 'Mini Landscape (4" × 3")' },
-                    { value: '1320,1056', label: 'Compact Portrait (5" × 4")' }
+                    // Compact landscape formats that fit
+                    { value: '1122,792', label: 'Compact Landscape (4.25" × 3")' },
+                    { value: '1320,792', label: 'Medium Landscape (5" × 3")' },
+                    { value: '1584,792', label: 'Wide Landscape (6" × 3")' },
+                    // Square
+                    { value: '792,792', label: 'Square (3" × 3")' }
                 ]
             }
         };
         
         const defaultMargins = {
             // Full device sizes
-            '1872,1404': { top: 135.6, bottom: 146.9, left: 135.6, right: 135.6 },
+            '1404,1872': { top: 124.3, bottom: 135.6, left: 135.6, right: 124.3 },
+            '1620,2160': { top: 137.4, bottom: 148.7, left: 148.7, right: 137.4 },
             '1696,954': { top: 79.2, bottom: 92.4, left: 92.4, right: 79.2 },
             
-            // Mass Market / Pocket Book (4.25" × 6.87")
+            // reMarkable 1/2 (226 PPI)
             '961,1553': { top: 90.4, bottom: 101.7, left: 90.4, right: 90.4 },
-            '1553,961': { top: 67.8, bottom: 79.1, left: 90.4, right: 79.1 },
-            '1122,1814': { top: 92.4, bottom: 105.6, left: 92.4, right: 92.4 },
-            
-            // Fiction / Novella (5" × 8")
             '1130,1808': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
-            '1808,1130': { top: 79.1, bottom: 90.4, left: 113, right: 90.4 },
-            '1320,2112': { top: 105.6, bottom: 118.8, left: 105.6, right: 92.4 },
-            
-            // Fiction (5.25" × 8")
             '1186,1808': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
-            '1808,1186': { top: 79.1, bottom: 90.4, left: 113, right: 90.4 },
-            '1386,2112': { top: 105.6, bottom: 118.8, left: 105.6, right: 92.4 },
-            
-            // Digest (5.5" × 8.5")
-            '1243,1921': { top: 113, bottom: 124.3, left: 113, right: 101.7 },
-            '1921,1243': { top: 90.4, bottom: 101.7, left: 124.3, right: 101.7 },
-            '1452,2244': { top: 118.8, bottom: 132, left: 118.8, right: 105.6 },
-            
-            // US Trade (6" × 9")
-            '1356,2034': { top: 124.3, bottom: 135.6, left: 124.3, right: 113 },
-            '2034,1356': { top: 101.7, bottom: 113, left: 135.6, right: 113 },
-            '1584,2376': { top: 132, bottom: 145.2, left: 132, right: 118.8 },
-            
-            // A5 (5.83" × 8.27")
             '1317,1869': { top: 124.3, bottom: 135.6, left: 113, right: 113 },
-            '1869,1317': { top: 113, bottom: 124.3, left: 135.6, right: 113 },
-            '1540,2185': { top: 132, bottom: 145.2, left: 118.8, right: 118.8 },
-            
-            // A6 (4.13" × 5.83")
             '933,1317': { top: 90.4, bottom: 101.7, left: 90.4, right: 79.1 },
             '1317,933': { top: 79.1, bottom: 90.4, left: 101.7, right: 79.1 },
-            '1090,1540': { top: 92.4, bottom: 105.6, left: 92.4, right: 79.2 },
-            '1540,1090': { top: 79.2, bottom: 92.4, left: 105.6, right: 79.2 },
-            
-            // UK B-Format (5.07" × 7.8")
             '1146,1763': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
-            '1763,1146': { top: 79.1, bottom: 90.4, left: 113, right: 90.4 },
-            '1339,2059': { top: 105.6, bottom: 118.8, left: 105.6, right: 92.4 },
-            
-            // Royal (6.14" × 9.21")
             '1388,2081': { top: 124.3, bottom: 135.6, left: 124.3, right: 113 },
+            '1130,1130': { top: 90.4, bottom: 101.7, left: 90.4, right: 90.4 },
+            '1356,1356': { top: 101.7, bottom: 113, left: 101.7, right: 101.7 },
             
-            // Non-Fiction / Children's (7" × 10")
-            '1582,2260': { top: 135.6, bottom: 146.9, left: 135.6, right: 124.3 },
+            // reMarkable Pro (229 PPI)
+            '973,1573': { top: 91.6, bottom: 103, left: 91.6, right: 91.6 },
+            '1573,973': { top: 68.7, bottom: 80.1, left: 103, right: 80.1 },
+            '1145,1832': { top: 103, bottom: 114.5, left: 103, right: 91.6 },
+            '1832,1145': { top: 80.1, bottom: 91.6, left: 114.5, right: 91.6 },
+            '1202,1832': { top: 103, bottom: 114.5, left: 103, right: 91.6 },
+            '1832,1202': { top: 80.1, bottom: 91.6, left: 114.5, right: 91.6 },
+            '1260,1947': { top: 114.5, bottom: 125.9, left: 114.5, right: 103 },
+            '1947,1260': { top: 91.6, bottom: 103, left: 125.9, right: 103 },
+            '1374,2061': { top: 125.9, bottom: 137.4, left: 125.9, right: 114.5 },
+            '2061,1374': { top: 103, bottom: 114.5, left: 137.4, right: 114.5 },
+            '1335,1894': { top: 125.9, bottom: 137.4, left: 114.5, right: 114.5 },
+            '1894,1335': { top: 114.5, bottom: 125.9, left: 137.4, right: 114.5 },
+            '946,1335': { top: 91.6, bottom: 103, left: 91.6, right: 80.1 },
+            '1335,946': { top: 80.1, bottom: 91.6, left: 103, right: 80.1 },
+            '1161,1786': { top: 103, bottom: 114.5, left: 103, right: 91.6 },
+            '1786,1161': { top: 80.1, bottom: 91.6, left: 114.5, right: 91.6 },
+            '1406,2109': { top: 125.9, bottom: 137.4, left: 125.9, right: 114.5 },
+            '2109,1406': { top: 103, bottom: 114.5, left: 137.4, right: 114.5 },
+            '1603,2290': { top: 137.4, bottom: 148.7, left: 137.4, right: 125.9 },
+            '1145,1145': { top: 91.6, bottom: 103, left: 91.6, right: 91.6 },
+            '1374,1374': { top: 103, bottom: 114.5, left: 103, right: 103 },
+            '1603,1603': { top: 114.5, bottom: 125.9, left: 114.5, right: 114.5 },
             
-            // Large Format (8" × 10")
-            '1808,2260': { top: 135.6, bottom: 146.9, left: 146.9, right: 135.6 },
-            
-            // Textbook / Manual (8.5" × 11")
-            '1921,2486': { top: 146.9, bottom: 158.2, left: 146.9, right: 135.6 },
-            
-            // Square formats
-            '1582,1582': { top: 113, bottom: 124.3, left: 113, right: 113 },
-            '1808,1808': { top: 124.3, bottom: 135.6, left: 124.3, right: 124.3 },
-            '1921,1921': { top: 135.6, bottom: 146.9, left: 135.6, right: 135.6 },
-            
-            // Paper Pro Move compact formats
-            '1056,792': { top: 66, bottom: 79.2, left: 66, right: 66 },
-            '1320,1056': { top: 79.2, bottom: 92.4, left: 79.2, right: 66 }
+            // Paper Pro Move (264 PPI)
+            '1122,792': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
+            '1320,792': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
+            '1584,792': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
+            '792,792': { top: 66, bottom: 79.2, left: 66, right: 66 }
         };
         
         const marginRecommendations = {
@@ -790,7 +807,17 @@
                 option.value = size.value;
                 
                 // Check if size exceeds device dimensions
-                if (width > device.width || height > device.height) {
+                // For landscape pages (width > height), check against rotated device dimensions
+                let fits;
+                if (width > height) {
+                    // Landscape: compare width to device height, height to device width
+                    fits = (width <= device.height && height <= device.width);
+                } else {
+                    // Portrait or square: compare normally
+                    fits = (width <= device.width && height <= device.height);
+                }
+                
+                if (!fits) {
                     option.textContent = size.label + ' (Too Large)';
                     option.disabled = true;
                     option.style.color = '#999';
@@ -805,7 +832,13 @@
             const sameIndex = device.sizes.findIndex(s => s.value === currentValue);
             if (sameIndex >= 0) {
                 const [width, height] = currentValue.split(',').map(Number);
-                if (width <= device.width && height <= device.height) {
+                let fits;
+                if (width > height) {
+                    fits = (width <= device.height && height <= device.width);
+                } else {
+                    fits = (width <= device.width && height <= device.height);
+                }
+                if (fits) {
                     pageSizeSelect.selectedIndex = sameIndex;
                 } else {
                     // Select first non-disabled option
@@ -873,6 +906,47 @@
         }
         
         window.printTemplate = printTemplate;
+        
+        function updateRulers() {
+            const device = devices[deviceTypeSelect.value];
+            const [pageWidth, pageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const showRulers = showRulersCheckbox.checked;
+            
+            if (showRulers) {
+                rulerLeft.style.display = 'block';
+                rulerBottom.style.display = 'block';
+                
+                // Clear existing rulers
+                rulerLeft.innerHTML = '';
+                rulerBottom.innerHTML = '';
+                
+                // Calculate inches based on device DPI
+                const widthInInches = pageWidth / device.dpi;
+                const heightInInches = pageHeight / device.dpi;
+                const pixelsPerQuarterInch = device.dpi / 4;
+                
+                // Create left ruler (vertical, measuring height)
+                for (let i = 0.25; i <= heightInInches; i += 0.25) {
+                    const mark = document.createElement('div');
+                    mark.className = 'ruler-mark';
+                    mark.textContent = i.toFixed(2).replace(/\.?0+$/, '') + '"';
+                    mark.style.top = (i * device.dpi) + 'px';
+                    rulerLeft.appendChild(mark);
+                }
+                
+                // Create bottom ruler (horizontal, measuring width)
+                for (let i = 0.25; i <= widthInInches; i += 0.25) {
+                    const mark = document.createElement('div');
+                    mark.className = 'ruler-mark';
+                    mark.textContent = i.toFixed(2).replace(/\.?0+$/, '') + '"';
+                    mark.style.left = (i * device.dpi) + 'px';
+                    rulerBottom.appendChild(mark);
+                }
+            } else {
+                rulerLeft.style.display = 'none';
+                rulerBottom.style.display = 'none';
+            }
+        }
         
         function updateTemplate() {
             const device = devices[deviceTypeSelect.value];
@@ -991,6 +1065,9 @@
             } else {
                 urlText.style.display = 'none';
             }
+            
+            // Update rulers
+            updateRulers();
         }
         
         deviceTypeSelect.addEventListener('change', updatePageSizes);
@@ -1007,6 +1084,7 @@
         marginRightSelect.addEventListener('change', updateTemplate);
         gridSizeSelect.addEventListener('change', updateTemplate);
         overlayGridSelect.addEventListener('change', updateTemplate);
+        showRulersCheckbox.addEventListener('change', updateRulers);
         
         // Initialize
         updatePageSizes();
