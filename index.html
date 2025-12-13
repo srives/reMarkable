@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reMarkable Pro Template</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .controls label {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .controls select, .controls button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        
+        .controls button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .controls button:hover {
+            background: #0056b3;
+        }
+        
+        .template-container {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+        
+        /* Template page - dimensions will be updated dynamically */
+        .template-page {
+            width: 1872px;
+            height: 1404px;
+            background: #f5f5f5;
+            position: relative;
+            margin: 0 auto;
+        }
+        
+        .border-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .content-area {
+            position: absolute;
+            background: white;
+            z-index: 0;
+        }
+        
+        .margin-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        .url-text {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #999;
+            font-family: Arial, sans-serif;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        /* Lined template - will be updated dynamically */
+        .lined {
+            background-color: white;
+        }
+        
+        /* Grid template - will be updated dynamically */
+        .grid {
+            background-color: white;
+        }
+        
+        /* Dot grid template - will be updated dynamically */
+        .dot-grid {
+            background-color: white;
+        }
+        
+        /* Blank template */
+        .blank {
+            background: white;
+        }
+        
+        /* Cornell notes */
+        .cornell {
+            background: white;
+            position: relative;
+        }
+        
+        .cornell::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 150px;
+            width: 30%;
+            border-right: 2px solid #c0c0c0;
+        }
+        
+        .cornell::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 150px;
+            height: 2px;
+            background: #c0c0c0;
+        }
+        
+        /* Music staff */
+        .music {
+            background-image: repeating-linear-gradient(
+                transparent,
+                transparent 100px,
+                #d0d0d0 100px,
+                #d0d0d0 101px,
+                transparent 101px,
+                transparent 120px,
+                #d0d0d0 120px,
+                #d0d0d0 121px,
+                transparent 121px,
+                transparent 140px,
+                #d0d0d0 140px,
+                #d0d0d0 141px,
+                transparent 141px,
+                transparent 160px,
+                #d0d0d0 160px,
+                #d0d0d0 161px,
+                transparent 161px,
+                transparent 180px,
+                #d0d0d0 180px,
+                #d0d0d0 181px,
+                transparent 181px,
+                transparent 250px
+            );
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            
+            .controls {
+                display: none;
+            }
+            
+            .info {
+                display: none;
+            }
+            
+            .template-container {
+                box-shadow: none;
+            }
+            
+            .template-page {
+                page-break-after: always;
+                margin: 0;
+            }
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h2 style="margin: 0 0 5px 0; color: #333; text-align: center; font-style: italic; font-weight: normal;">Rives' reMarkable Book Publishing Template</h2>
+        <p style="margin: 0 0 15px 0; color: #666; text-align: center; font-size: 14px;">Suitable for writing on the reMarkable</p>
+        <div style="margin-bottom: 10px;">
+            <label for="deviceType">Device:</label>
+            <select id="deviceType">
+                <option value="rm2">reMarkable 1/2</option>
+                <option value="rmpro" selected>reMarkable Pro</option>
+                <option value="paperpromove">Paper Pro Move</option>
+            </select>
+            
+            <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
+            <select id="pageSize">
+                <option value="1872,1404">Full reMarkable Pro (8.27" × 6.20")</option>
+                <option value="1869,1317">A5 Landscape (8.27" × 5.83")</option>
+                <option value="933,1317">A6 Portrait (4.13" × 5.83")</option>
+                <option value="1317,933">A6 Landscape (5.83" × 4.13")</option>
+                <option value="1356,1243">US Trade Landscape (6" × 5.5")</option>
+                <option value="1243,904">Digest Landscape (5.5" × 4")</option>
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+            <label for="marginTop">Margins - Top:</label>
+            <select id="marginTop">
+                <option value="0">0"</option>
+                <option value="11.3">0.05"</option>
+                <option value="22.6">0.10"</option>
+                <option value="33.9">0.15"</option>
+                <option value="45.2">0.20"</option>
+                <option value="56.5">0.25"</option>
+                <option value="67.8">0.30"</option>
+                <option value="79.1">0.35"</option>
+                <option value="90.4">0.40"</option>
+                <option value="101.7">0.45"</option>
+                <option value="113">0.50"</option>
+                <option value="124.3">0.55"</option>
+                <option value="135.6">0.60"</option>
+                <option value="146.9">0.65"</option>
+                <option value="158.2">0.70"</option>
+                <option value="169.5" selected>0.75"</option>
+                <option value="180.8">0.80"</option>
+                <option value="192.1">0.85"</option>
+                <option value="203.4">0.90"</option>
+                <option value="214.7">0.95"</option>
+                <option value="226">1.00"</option>
+                <option value="237.3">1.05"</option>
+                <option value="248.6">1.10"</option>
+                <option value="259.9">1.15"</option>
+                <option value="271.2">1.20"</option>
+                <option value="282.5">1.25"</option>
+                <option value="293.8">1.30"</option>
+                <option value="305.1">1.35"</option>
+                <option value="316.4">1.40"</option>
+                <option value="327.7">1.45"</option>
+                <option value="339">1.50"</option>
+            </select>
+            
+            <label for="marginBottom" style="margin-left: 10px;">Bottom:</label>
+            <select id="marginBottom">
+                <option value="0">0"</option>
+                <option value="11.3">0.05"</option>
+                <option value="22.6">0.10"</option>
+                <option value="33.9">0.15"</option>
+                <option value="45.2">0.20"</option>
+                <option value="56.5">0.25"</option>
+                <option value="67.8">0.30"</option>
+                <option value="79.1">0.35"</option>
+                <option value="90.4">0.40"</option>
+                <option value="101.7">0.45"</option>
+                <option value="113">0.50"</option>
+                <option value="124.3">0.55"</option>
+                <option value="135.6">0.60"</option>
+                <option value="146.9">0.65"</option>
+                <option value="158.2">0.70"</option>
+                <option value="169.5" selected>0.75"</option>
+                <option value="180.8">0.80"</option>
+                <option value="192.1">0.85"</option>
+                <option value="203.4">0.90"</option>
+                <option value="214.7">0.95"</option>
+                <option value="226">1.00"</option>
+                <option value="237.3">1.05"</option>
+                <option value="248.6">1.10"</option>
+                <option value="259.9">1.15"</option>
+                <option value="271.2">1.20"</option>
+                <option value="282.5">1.25"</option>
+                <option value="293.8">1.30"</option>
+                <option value="305.1">1.35"</option>
+                <option value="316.4">1.40"</option>
+                <option value="327.7">1.45"</option>
+                <option value="339">1.50"</option>
+            </select>
+            
+            <label for="marginLeft" style="margin-left: 10px;">Left:</label>
+            <select id="marginLeft">
+                <option value="0">0"</option>
+                <option value="11.3">0.05"</option>
+                <option value="22.6">0.10"</option>
+                <option value="33.9">0.15"</option>
+                <option value="45.2">0.20"</option>
+                <option value="56.5">0.25"</option>
+                <option value="67.8">0.30"</option>
+                <option value="79.1">0.35"</option>
+                <option value="90.4">0.40"</option>
+                <option value="101.7">0.45"</option>
+                <option value="113">0.50"</option>
+                <option value="124.3">0.55"</option>
+                <option value="135.6">0.60"</option>
+                <option value="146.9">0.65"</option>
+                <option value="158.2">0.70"</option>
+                <option value="169.5" selected>0.75"</option>
+                <option value="180.8">0.80"</option>
+                <option value="192.1">0.85"</option>
+                <option value="203.4">0.90"</option>
+                <option value="214.7">0.95"</option>
+                <option value="226">1.00"</option>
+                <option value="237.3">1.05"</option>
+                <option value="248.6">1.10"</option>
+                <option value="259.9">1.15"</option>
+                <option value="271.2">1.20"</option>
+                <option value="282.5">1.25"</option>
+                <option value="293.8">1.30"</option>
+                <option value="305.1">1.35"</option>
+                <option value="316.4">1.40"</option>
+                <option value="327.7">1.45"</option>
+                <option value="339">1.50"</option>
+            </select>
+            
+            <label for="marginRight" style="margin-left: 10px;">Right:</label>
+            <select id="marginRight">
+                <option value="0">0"</option>
+                <option value="11.3">0.05"</option>
+                <option value="22.6">0.10"</option>
+                <option value="33.9">0.15"</option>
+                <option value="45.2">0.20"</option>
+                <option value="56.5">0.25"</option>
+                <option value="67.8">0.30"</option>
+                <option value="79.1">0.35"</option>
+                <option value="90.4">0.40"</option>
+                <option value="101.7">0.45"</option>
+                <option value="113">0.50"</option>
+                <option value="124.3">0.55"</option>
+                <option value="135.6">0.60"</option>
+                <option value="146.9">0.65"</option>
+                <option value="158.2">0.70"</option>
+                <option value="169.5" selected>0.75"</option>
+                <option value="180.8">0.80"</option>
+                <option value="192.1">0.85"</option>
+                <option value="203.4">0.90"</option>
+                <option value="214.7">0.95"</option>
+                <option value="226">1.00"</option>
+                <option value="237.3">1.05"</option>
+                <option value="248.6">1.10"</option>
+                <option value="259.9">1.15"</option>
+                <option value="271.2">1.20"</option>
+                <option value="282.5">1.25"</option>
+                <option value="293.8">1.30"</option>
+                <option value="305.1">1.35"</option>
+                <option value="316.4">1.40"</option>
+                <option value="327.7">1.45"</option>
+                <option value="339">1.50"</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="templateType">Template Type:</label>
+            <select id="templateType">
+                <option value="blank">Blank</option>
+                <option value="lined" selected>Lined</option>
+                <option value="grid">Grid</option>
+                <option value="dot-grid">Dot Grid</option>
+                <option value="cornell">Cornell Notes</option>
+                <option value="music">Music Staff</option>
+            </select>
+            
+            <label for="gridSize" id="gridSizeLabel" style="margin-left: 20px;">Line/Grid Size:</label>
+            <select id="gridSize">
+                <option value="11.3">0.05" (11px)</option>
+                <option value="22.6" selected>0.10" (23px)</option>
+                <option value="33.9">0.15" (34px)</option>
+                <option value="45.2">0.20" (45px)</option>
+                <option value="56.5">0.25" (57px)</option>
+                <option value="67.8">0.30" (68px)</option>
+                <option value="79.1">0.35" (79px)</option>
+                <option value="90.4">0.40" (90px)</option>
+                <option value="101.7">0.45" (102px)</option>
+                <option value="113">0.50" (113px)</option>
+                <option value="124.3">0.55" (124px)</option>
+                <option value="135.6">0.60" (136px)</option>
+                <option value="146.9">0.65" (147px)</option>
+                <option value="158.2">0.70" (158px)</option>
+                <option value="169.5">0.75" (170px)</option>
+                <option value="180.8">0.80" (181px)</option>
+                <option value="192.1">0.85" (192px)</option>
+                <option value="203.4">0.90" (203px)</option>
+                <option value="214.7">0.95" (215px)</option>
+                <option value="226">1.00" (226px)</option>
+                <option value="237.3">1.05" (237px)</option>
+                <option value="248.6">1.10" (249px)</option>
+                <option value="259.9">1.15" (260px)</option>
+                <option value="271.2">1.20" (271px)</option>
+                <option value="282.5">1.25" (283px)</option>
+            </select>
+            
+            <label for="overlayGrid" id="overlayGridLabel" style="margin-left: 20px;">Overlay Every:</label>
+            <select id="overlayGrid">
+                <option value="0">None</option>
+                <option value="2">2 squares</option>
+                <option value="3">3 squares</option>
+                <option value="4">4 squares</option>
+                <option value="5" selected>5 squares</option>
+                <option value="6">6 squares</option>
+                <option value="7">7 squares</option>
+                <option value="8">8 squares</option>
+                <option value="9">9 squares</option>
+                <option value="10">10 squares</option>
+            </select>
+            
+            <button onclick="window.print()">Print/Save as PDF</button>
+        </div>
+    </div>
+    
+    <div class="info">
+        <strong>Instructions:</strong> 
+        <ul style="margin: 10px 0; padding-left: 20px;">
+            <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
+            <li><strong>Page Size:</strong> Select your target book/page size. The template will center it and gray out the border area.</li>
+            <li><strong>Margins:</strong> Set individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with light red borders.</li>
+            <li><strong>Template Type:</strong> Select your preferred template style (lined, grid, dot grid, etc.).</li>
+            <li><strong>Line/Grid Size:</strong> For lined, grid, or dot-grid templates, choose the spacing in inches (0.05" to 1.25").</li>
+            <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares (e.g., "5 squares" creates bold lines every 5 grid squares).</li>
+            <li><strong>Export:</strong> Click "Print/Save as PDF" and select "Save as PDF" in the dialog.</li>
+        </ul>
+        Transfer the PDF to your reMarkable device via the mobile app or desktop software.
+    </div>
+    
+    <div class="template-container">
+        <div id="templatePage" class="template-page">
+            <div id="borderOverlay" class="border-overlay"></div>
+            <div id="contentArea" class="content-area lined">
+                <div id="urlText" class="url-text">https://github.com/srives/reMarkable</div>
+                <div id="marginLines" class="margin-lines"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const deviceTypeSelect = document.getElementById('deviceType');
+        const templateTypeSelect = document.getElementById('templateType');
+        const pageSizeSelect = document.getElementById('pageSize');
+        const marginTopSelect = document.getElementById('marginTop');
+        const marginBottomSelect = document.getElementById('marginBottom');
+        const marginLeftSelect = document.getElementById('marginLeft');
+        const marginRightSelect = document.getElementById('marginRight');
+        const gridSizeSelect = document.getElementById('gridSize');
+        const overlayGridSelect = document.getElementById('overlayGrid');
+        const gridSizeLabel = document.getElementById('gridSizeLabel');
+        const overlayGridLabel = document.getElementById('overlayGridLabel');
+        const contentArea = document.getElementById('contentArea');
+        const borderOverlay = document.getElementById('borderOverlay');
+        const marginLines = document.getElementById('marginLines');
+        const templatePage = document.getElementById('templatePage');
+        const urlText = document.getElementById('urlText');
+        
+        // Device specifications
+        const devices = {
+            rm2: {
+                name: 'reMarkable 1/2',
+                width: 1872,
+                height: 1404,
+                dpi: 226,
+                sizes: [
+                    { value: '1872,1404', label: 'Full reMarkable 1/2 (8.27" × 6.20")' },
+                    { value: '1869,1317', label: 'A5 Landscape (8.27" × 5.83")' },
+                    { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
+                    { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
+                    { value: '1356,1243', label: 'US Trade Landscape (6" × 5.5")' },
+                    { value: '1243,904', label: 'Digest Landscape (5.5" × 4")' }
+                ]
+            },
+            rmpro: {
+                name: 'reMarkable Pro',
+                width: 1872,
+                height: 1404,
+                dpi: 226,
+                sizes: [
+                    { value: '1872,1404', label: 'Full reMarkable Pro (8.27" × 6.20")' },
+                    { value: '1869,1317', label: 'A5 Landscape (8.27" × 5.83")' },
+                    { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
+                    { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
+                    { value: '1356,1243', label: 'US Trade Landscape (6" × 5.5")' },
+                    { value: '1243,904', label: 'Digest Landscape (5.5" × 4")' }
+                ]
+            },
+            paperpromove: {
+                name: 'Paper Pro Move',
+                width: 1696,
+                height: 954,
+                dpi: 264,
+                sizes: [
+                    { value: '1696,954', label: 'Full Paper Pro Move (6.42" × 3.61")' },
+                    { value: '1540,880', label: 'Wide Format (5.83" × 3.33")' },
+                    { value: '1320,768', label: 'Pocket Size (5" × 2.91")' },
+                    { value: '1090,768', label: 'A7 Portrait (4.13" × 2.91")' },
+                    { value: '1188,864', label: 'Compact Landscape (4.5" × 3.27")' },
+                    { value: '1056,768', label: 'Mini Digest (4" × 2.91")' }
+                ]
+            }
+        };
+        
+        function updatePageSizes() {
+            const device = devices[deviceTypeSelect.value];
+            const currentValue = pageSizeSelect.value;
+            
+            // Update template page dimensions
+            templatePage.style.width = device.width + 'px';
+            templatePage.style.height = device.height + 'px';
+            
+            // Clear and repopulate page size options
+            pageSizeSelect.innerHTML = '';
+            device.sizes.forEach(size => {
+                const option = document.createElement('option');
+                option.value = size.value;
+                option.textContent = size.label;
+                pageSizeSelect.appendChild(option);
+            });
+            
+            // Try to maintain similar selection or default to first
+            const sameIndex = device.sizes.findIndex(s => s.value === currentValue);
+            if (sameIndex >= 0) {
+                pageSizeSelect.selectedIndex = sameIndex;
+            } else {
+                pageSizeSelect.selectedIndex = 0;
+            }
+            
+            updateTemplate();
+        }
+        
+        function updateTemplate() {
+            const device = devices[deviceTypeSelect.value];
+            const [pageWidth, pageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const marginTop = parseFloat(marginTopSelect.value);
+            const marginBottom = parseFloat(marginBottomSelect.value);
+            const marginLeft = parseFloat(marginLeftSelect.value);
+            const marginRight = parseFloat(marginRightSelect.value);
+            const gridSize = parseFloat(gridSizeSelect.value);
+            const overlayMultiplier = parseInt(overlayGridSelect.value);
+            const templateType = templateTypeSelect.value;
+            
+            // Update content area size and position (centered)
+            const offsetX = (device.width - pageWidth) / 2;
+            const offsetY = (device.height - pageHeight) / 2;
+            
+            contentArea.style.width = pageWidth + 'px';
+            contentArea.style.height = pageHeight + 'px';
+            contentArea.style.left = offsetX + 'px';
+            contentArea.style.top = offsetY + 'px';
+            
+            // Update border overlay (gray out areas outside the page)
+            if (offsetX > 0 || offsetY > 0) {
+                borderOverlay.style.boxShadow = `
+                    inset ${offsetX}px 0 0 rgba(0,0,0,0.15),
+                    inset -${offsetX}px 0 0 rgba(0,0,0,0.15),
+                    inset 0 ${offsetY}px 0 rgba(0,0,0,0.15),
+                    inset 0 -${offsetY}px 0 rgba(0,0,0,0.15)
+                `;
+            } else {
+                borderOverlay.style.boxShadow = 'none';
+            }
+            
+            // Update template type
+            contentArea.className = 'content-area ' + templateType;
+            
+            // Show/hide grid size and overlay based on template type
+            if (templateType === 'lined' || templateType === 'grid' || templateType === 'dot-grid') {
+                gridSizeSelect.style.display = 'inline-block';
+                gridSizeLabel.style.display = 'inline';
+            } else {
+                gridSizeSelect.style.display = 'none';
+                gridSizeLabel.style.display = 'none';
+            }
+            
+            // Show overlay only for grid and dot-grid
+            if (templateType === 'grid' || templateType === 'dot-grid') {
+                overlayGridSelect.style.display = 'inline-block';
+                overlayGridLabel.style.display = 'inline';
+            } else {
+                overlayGridSelect.style.display = 'none';
+                overlayGridLabel.style.display = 'none';
+            }
+            
+            // Update grid/dot-grid/lined size dynamically
+            if (templateType === 'lined') {
+                const lineSpacing = gridSize - 1;
+                contentArea.style.backgroundImage = `
+                    repeating-linear-gradient(
+                        transparent,
+                        transparent ${lineSpacing}px,
+                        #d0d0d0 ${lineSpacing}px,
+                        #d0d0d0 ${gridSize}px
+                    )
+                `;
+                contentArea.style.backgroundSize = '';
+            } else if (templateType === 'grid') {
+                const overlaySize = gridSize * overlayMultiplier;
+                let backgroundImages = `
+                    repeating-linear-gradient(0deg, #e0e0e0 0px, #e0e0e0 1px, transparent 1px, transparent ${gridSize}px),
+                    repeating-linear-gradient(90deg, #e0e0e0 0px, #e0e0e0 1px, transparent 1px, transparent ${gridSize}px)
+                `;
+                
+                // Add overlay grid if multiplier is set
+                if (overlayMultiplier > 0) {
+                    backgroundImages = `
+                        repeating-linear-gradient(0deg, #ddd 0px, #ddd 2px, transparent 2px, transparent ${overlaySize}px),
+                        repeating-linear-gradient(90deg, #ddd 0px, #ddd 2px, transparent 2px, transparent ${overlaySize}px),
+                    ` + backgroundImages;
+                }
+                
+                contentArea.style.backgroundImage = backgroundImages;
+                contentArea.style.backgroundSize = '';
+            } else if (templateType === 'dot-grid') {
+                const overlaySize = gridSize * overlayMultiplier;
+                let backgroundImages = `radial-gradient(circle, #c0c0c0 1.5px, transparent 1.5px)`;
+                let backgroundSizes = `${gridSize}px ${gridSize}px`;
+                
+                // Add overlay dots if multiplier is set
+                if (overlayMultiplier > 0) {
+                    backgroundImages = `
+                        radial-gradient(circle, #bbb 2.5px, transparent 2.5px),
+                    ` + backgroundImages;
+                    backgroundSizes = `${overlaySize}px ${overlaySize}px, ${gridSize}px ${gridSize}px`;
+                }
+                
+                contentArea.style.backgroundImage = backgroundImages;
+                contentArea.style.backgroundSize = backgroundSizes;
+            } else {
+                contentArea.style.backgroundImage = '';
+                contentArea.style.backgroundSize = '';
+            }
+            
+            // Update margin lines with individual margins
+            if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
+                marginLines.style.borderTopWidth = marginTop + 'px';
+                marginLines.style.borderBottomWidth = marginBottom + 'px';
+                marginLines.style.borderLeftWidth = marginLeft + 'px';
+                marginLines.style.borderRightWidth = marginRight + 'px';
+                marginLines.style.borderStyle = 'solid';
+                
+                // Use grayscale for reMarkable 1/2 (no color support), color for other devices
+                if (deviceTypeSelect.value === 'rm2') {
+                    marginLines.style.borderColor = 'rgba(100, 100, 100, 0.4)';
+                } else {
+                    marginLines.style.borderColor = 'rgba(255, 100, 100, 0.3)';
+                }
+                
+                marginLines.style.display = 'block';
+            } else {
+                marginLines.style.display = 'none';
+            }
+            
+            // Show URL text only if there's a top margin
+            if (marginTop >= 15) {
+                urlText.style.display = 'block';
+            } else {
+                urlText.style.display = 'none';
+            }
+        }
+        
+        deviceTypeSelect.addEventListener('change', updatePageSizes);
+        templateTypeSelect.addEventListener('change', updateTemplate);
+        pageSizeSelect.addEventListener('change', updateTemplate);
+        marginTopSelect.addEventListener('change', updateTemplate);
+        marginBottomSelect.addEventListener('change', updateTemplate);
+        marginLeftSelect.addEventListener('change', updateTemplate);
+        marginRightSelect.addEventListener('change', updateTemplate);
+        gridSizeSelect.addEventListener('change', updateTemplate);
+        overlayGridSelect.addEventListener('change', updateTemplate);
+        
+        // Initial update
+        updatePageSizes();
+    </script>
+</body>
+</html>
