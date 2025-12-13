@@ -547,14 +547,14 @@
             <input type="checkbox" id="showRulers">
             
             <label for="showMarginDimensions" style="margin-left: 20px;">Show Wd × Ht:</label>
-            <input type="checkbox" id="showMarginDimensions" checked>
+            <input type="checkbox" id="showMarginDimensions">
             
             <button onclick="printTemplate()">Print/Save as PDF</button>
         </div>
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.107</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.108</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
@@ -940,8 +940,8 @@
                     line.setAttribute('y1', 0);
                     line.setAttribute('x2', x);
                     line.setAttribute('y2', pageHeight);
-                    line.setAttribute('stroke', '#ececec');
-                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('stroke', '#f8f8f8');
+                    line.setAttribute('stroke-width', '1');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
