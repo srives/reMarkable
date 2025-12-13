@@ -148,6 +148,8 @@
             height: 100%;
             pointer-events: none;
             z-index: 1;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         
         .lined {
@@ -519,7 +521,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.97</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.98</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
@@ -581,21 +583,14 @@
                 dpi: 226,
                 sizes: [
                     { value: '1404,1872', label: 'Full reMarkable 1/2 (6.21" × 8.28")' },
-                    // Mass Market (4.25" × 6.87")
                     { value: '961,1553', label: 'Mass Market Portrait (4.25" × 6.87")' },
-                    // Fiction & Novellas (5" × 8")
                     { value: '1130,1808', label: 'Fiction Portrait (5" × 8")' },
-                    // Fiction (5.25" × 8")
                     { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
-                    // A-Series
                     { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
                     { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
                     { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
-                    // UK B-Format (5.07" × 7.8")
                     { value: '1146,1763', label: 'UK B-Format Portrait (5.07" × 7.8")' },
-                    // Royal (6.14" × 9.21") - too tall
                     { value: '1388,2081', label: 'Royal Portrait (6.14" × 9.21")' },
-                    // Square formats
                     { value: '1130,1130', label: 'Square (5" × 5")' },
                     { value: '1356,1356', label: 'Square (6" × 6")' }
                 ]
@@ -607,33 +602,24 @@
                 dpi: 229,
                 sizes: [
                     { value: '1620,2160', label: 'Full reMarkable Pro (7.07" × 9.43")' },
-                    // Mass Market (4.25" × 6.87")
                     { value: '973,1573', label: 'Mass Market Portrait (4.25" × 6.87")' },
                     { value: '1573,973', label: 'Mass Market Landscape (6.87" × 4.25")' },
-                    // Fiction & Novellas (5" × 8")
                     { value: '1145,1832', label: 'Fiction Portrait (5" × 8")' },
                     { value: '1832,1145', label: 'Fiction Landscape (8" × 5")' },
-                    // Fiction (5.25" × 8")
                     { value: '1202,1832', label: 'Fiction Portrait (5.25" × 8")' },
                     { value: '1832,1202', label: 'Fiction Landscape (8" × 5.25")' },
-                    // Digest (5.5" × 8.5")
                     { value: '1260,1947', label: 'Digest Portrait (5.5" × 8.5")' },
                     { value: '1947,1260', label: 'Digest Landscape (8.5" × 5.5")' },
-                    // US Trade (6" × 9")
                     { value: '1374,2061', label: 'US Trade Portrait (6" × 9")' },
                     { value: '2061,1374', label: 'US Trade Landscape (9" × 6")' },
-                    // A-Series
                     { value: '1335,1894', label: 'A5 Portrait (5.83" × 8.27")' },
                     { value: '1894,1335', label: 'A5 Landscape (8.27" × 5.83")' },
                     { value: '946,1335', label: 'A6 Portrait (4.13" × 5.83")' },
                     { value: '1335,946', label: 'A6 Landscape (5.83" × 4.13")' },
-                    // UK B-Format (5.07" × 7.8")
                     { value: '1161,1786', label: 'UK B-Format Portrait (5.07" × 7.8")' },
                     { value: '1786,1161', label: 'UK B-Format Landscape (7.8" × 5.07")' },
-                    // Royal (6.14" × 9.21")
                     { value: '1406,2109', label: 'Royal Portrait (6.14" × 9.21")' },
                     { value: '2109,1406', label: 'Royal Landscape (9.21" × 6.14")' },
-                    // Square formats
                     { value: '1145,1145', label: 'Square (5" × 5")' },
                     { value: '1374,1374', label: 'Square (6" × 6")' },
                     { value: '1603,1603', label: 'Square (7" × 7")' }
@@ -646,75 +632,50 @@
                 dpi: 264,
                 sizes: [
                     { value: '1696,954', label: 'Full Paper Pro Move (6.42" × 3.61")' },
-                    // Compact landscape formats that fit
                     { value: '1122,792', label: 'Compact Landscape (4.25" × 3")' },
                     { value: '1320,792', label: 'Medium Landscape (5" × 3")' },
                     { value: '1584,792', label: 'Wide Landscape (6" × 3")' },
-                    // Square
                     { value: '792,792', label: 'Square (3" × 3")' }
                 ]
             }
         };
         
         const defaultMarginsInches = {
-            // Full device sizes
             '1404,1872': { top: 0.6, bottom: 0.65, left: 0.6, right: 0.6 },
             '1620,2160': { top: 0.6, bottom: 0.65, left: 0.65, right: 0.6 },
             '1696,954': { top: 0.3, bottom: 0.35, left: 0.35, right: 0.3 },
-            
-            // Mass Market / Pocket Book (4.25" × 6.87")
             '961,1553': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '973,1573': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '1573,973': { top: 0.3, bottom: 0.35, left: 0.45, right: 0.35 },
             '1122,1814': { top: 0.35, bottom: 0.4, left: 0.35, right: 0.35 },
-            
-            // Fiction / Novella (5" × 8")
             '1130,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1145,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1832,1145': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
-            
-            // Fiction (5.25" × 8")
             '1186,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1202,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1832,1202': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
-            
-            // Digest (5.5" × 8.5")
             '1260,1947': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.45 },
             '1947,1260': { top: 0.4, bottom: 0.45, left: 0.55, right: 0.45 },
-            
-            // US Trade (6" × 9")
             '1374,2061': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
             '2061,1374': { top: 0.45, bottom: 0.5, left: 0.6, right: 0.5 },
-            
-            // A5 (5.83" × 8.27")
             '1317,1869': { top: 0.55, bottom: 0.6, left: 0.5, right: 0.5 },
             '1335,1894': { top: 0.55, bottom: 0.6, left: 0.5, right: 0.5 },
             '1894,1335': { top: 0.5, bottom: 0.55, left: 0.6, right: 0.5 },
-            
-            // A6 (4.13" × 5.83")
             '933,1317': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.35 },
             '946,1335': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.35 },
             '1317,933': { top: 0.35, bottom: 0.4, left: 0.45, right: 0.35 },
             '1335,946': { top: 0.35, bottom: 0.4, left: 0.45, right: 0.35 },
-            
-            // UK B-Format (5.07" × 7.8")
             '1146,1763': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1161,1786': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1786,1161': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
-            
-            // Royal (6.14" × 9.21")
             '1388,2081': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
             '1406,2109': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
             '2109,1406': { top: 0.45, bottom: 0.5, left: 0.6, right: 0.5 },
-            
-            // Square formats
             '1130,1130': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '1145,1145': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '1356,1356': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.45 },
             '1374,1374': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.45 },
             '1603,1603': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.5 },
-            
-            // Paper Pro Move formats
             '1122,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
             '1320,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
             '1584,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
@@ -792,16 +753,8 @@
         }
         
         function applyRecommendedMargins() {
-            const pageSize = pageSizeSelect.value;
-            const margins = defaultMargins[pageSize];
-            
-            if (margins) {
-                marginTopSelect.value = margins.top;
-                marginBottomSelect.value = margins.bottom;
-                marginLeftSelect.value = margins.left;
-                marginRightSelect.value = margins.right;
-                updateTemplate();
-            }
+            applyDefaultMargins();
+            updateTemplate();
         }
         
         window.applyRecommendedMargins = applyRecommendedMargins;
@@ -812,7 +765,6 @@
             const marginsInches = defaultMarginsInches[pageSize];
             
             if (marginsInches) {
-                // Convert inches to pixels based on device DPI
                 const topPx = Math.round(marginsInches.top * device.dpi * 100) / 100;
                 const bottomPx = Math.round(marginsInches.bottom * device.dpi * 100) / 100;
                 const leftPx = Math.round(marginsInches.left * device.dpi * 100) / 100;
@@ -829,21 +781,18 @@
             const device = devices[deviceTypeSelect.value];
             const dpi = device.dpi;
             
-            // Store current values
             const currentTop = marginTopSelect.value;
             const currentBottom = marginBottomSelect.value;
             const currentLeft = marginLeftSelect.value;
             const currentRight = marginRightSelect.value;
             
-            // Clear and repopulate all margin dropdowns
             const marginSelects = [marginTopSelect, marginBottomSelect, marginLeftSelect, marginRightSelect];
             
             marginSelects.forEach(select => {
                 select.innerHTML = '';
                 
-                // Generate options from 0" to 1.5" in 0.05" increments
                 for (let inches = 0; inches <= 1.5; inches += 0.05) {
-                    const pixels = Math.round(inches * dpi * 100) / 100; // Round to 2 decimals
+                    const pixels = Math.round(inches * dpi * 100) / 100;
                     const option = document.createElement('option');
                     option.value = pixels;
                     option.textContent = inches.toFixed(2) + '"';
@@ -851,7 +800,6 @@
                 }
             });
             
-            // Try to restore previous values or set to defaults
             marginTopSelect.value = currentTop;
             marginBottomSelect.value = currentBottom;
             marginLeftSelect.value = currentLeft;
@@ -865,10 +813,7 @@
             templatePage.style.width = device.width + 'px';
             templatePage.style.height = device.height + 'px';
             
-            // Update print page size dynamically
             updatePrintPageSize(device.width, device.height);
-            
-            // Update margin dropdowns for new device DPI
             updateMarginDropdowns();
             
             pageSizeSelect.innerHTML = '';
@@ -877,14 +822,10 @@
                 const option = document.createElement('option');
                 option.value = size.value;
                 
-                // Check if size exceeds device dimensions
-                // For landscape pages (width > height), check against rotated device dimensions
                 let fits;
                 if (width > height) {
-                    // Landscape: compare width to device height, height to device width
                     fits = (width <= device.height && height <= device.width);
                 } else {
-                    // Portrait or square: compare normally
                     fits = (width <= device.width && height <= device.height);
                 }
                 
@@ -899,7 +840,6 @@
                 pageSizeSelect.appendChild(option);
             });
             
-            // Try to maintain similar selection or default to first non-disabled
             const sameIndex = device.sizes.findIndex(s => s.value === currentValue);
             if (sameIndex >= 0) {
                 const [width, height] = currentValue.split(',').map(Number);
@@ -912,7 +852,6 @@
                 if (fits) {
                     pageSizeSelect.selectedIndex = sameIndex;
                 } else {
-                    // Select first non-disabled option
                     pageSizeSelect.selectedIndex = 0;
                 }
             } else {
@@ -924,13 +863,11 @@
         }
         
         function updatePrintPageSize(width, height) {
-            // Remove existing print style if it exists
             const existingStyle = document.getElementById('dynamic-print-style');
             if (existingStyle) {
                 existingStyle.remove();
             }
             
-            // Create new style element for print page size
             const style = document.createElement('style');
             style.id = 'dynamic-print-style';
             style.textContent = `
@@ -953,24 +890,19 @@
         }
         
         function printTemplate() {
-            // Get the selected page size label for the filename
             const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
             const pageLabel = selectedOption.textContent.trim();
             
-            // Clean up the label to make it filename-friendly
             const filename = pageLabel
-                .replace(/[^\w\s\-\(\)\.]/g, '') // Remove special chars except spaces, hyphens, parens, dots
-                .replace(/\s+/g, '_')             // Replace spaces with underscores
-                .replace(/_{2,}/g, '_');          // Replace multiple underscores with single
+                .replace(/[^\w\s\-\(\)\.]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/_{2,}/g, '_');
             
-            // Set document title (browsers use this as default filename)
             const originalTitle = document.title;
             document.title = filename;
             
-            // Print
             window.print();
             
-            // Restore original title after a delay
             setTimeout(() => {
                 document.title = originalTitle;
             }, 1000);
@@ -979,7 +911,6 @@
         window.printTemplate = printTemplate;
         
         function generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType) {
-            // Clear existing SVG content
             gridSvg.innerHTML = '';
             gridSvg.style.display = 'none';
             
@@ -991,56 +922,51 @@
                 
                 const overlaySize = gridSize * overlayMultiplier;
                 
-                // Draw regular grid lines (vertical)
                 for (let x = gridSize; x < pageWidth; x += gridSize) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', x);
                     line.setAttribute('y1', 0);
                     line.setAttribute('x2', x);
                     line.setAttribute('y2', pageHeight);
-                    line.setAttribute('stroke', '#d0d0d0');
-                    line.setAttribute('stroke-width', '1.5');
+                    line.setAttribute('stroke', '#b0b0b0');
+                    line.setAttribute('stroke-width', '2');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
                 
-                // Draw regular grid lines (horizontal)
                 for (let y = gridSize; y < pageHeight; y += gridSize) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', 0);
                     line.setAttribute('y1', y);
                     line.setAttribute('x2', pageWidth);
                     line.setAttribute('y2', y);
-                    line.setAttribute('stroke', '#d0d0d0');
-                    line.setAttribute('stroke-width', '1.5');
+                    line.setAttribute('stroke', '#b0b0b0');
+                    line.setAttribute('stroke-width', '2');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
                 
-                // Draw overlay grid lines if enabled
                 if (overlayMultiplier > 0) {
-                    // Overlay vertical lines
                     for (let x = overlaySize; x < pageWidth; x += overlaySize) {
                         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                         line.setAttribute('x1', x);
                         line.setAttribute('y1', 0);
                         line.setAttribute('x2', x);
                         line.setAttribute('y2', pageHeight);
-                        line.setAttribute('stroke', '#bbb');
-                        line.setAttribute('stroke-width', '2.5');
+                        line.setAttribute('stroke', '#808080');
+                        line.setAttribute('stroke-width', '3');
                         line.setAttribute('shape-rendering', 'crispEdges');
                         gridSvg.appendChild(line);
                     }
                     
-                    // Overlay horizontal lines
                     for (let y = overlaySize; y < pageHeight; y += overlaySize) {
                         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                         line.setAttribute('x1', 0);
                         line.setAttribute('y1', y);
                         line.setAttribute('x2', pageWidth);
                         line.setAttribute('y2', y);
-                        line.setAttribute('stroke', '#bbb');
-                        line.setAttribute('stroke-width', '2.5');
+                        line.setAttribute('stroke', '#808080');
+                        line.setAttribute('stroke-width', '3');
                         line.setAttribute('shape-rendering', 'crispEdges');
                         gridSvg.appendChild(line);
                     }
@@ -1051,15 +977,14 @@
                 gridSvg.setAttribute('height', pageHeight);
                 gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
                 
-                // Draw horizontal lines
                 for (let y = gridSize; y < pageHeight; y += gridSize) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', 0);
                     line.setAttribute('y1', y);
                     line.setAttribute('x2', pageWidth);
                     line.setAttribute('y2', y);
-                    line.setAttribute('stroke', '#d0d0d0');
-                    line.setAttribute('stroke-width', '1');
+                    line.setAttribute('stroke', '#b0b0b0');
+                    line.setAttribute('stroke-width', '1.5');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
@@ -1071,27 +996,25 @@
                 
                 const overlaySize = gridSize * overlayMultiplier;
                 
-                // Draw regular dots
                 for (let x = gridSize; x < pageWidth; x += gridSize) {
                     for (let y = gridSize; y < pageHeight; y += gridSize) {
                         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                         circle.setAttribute('cx', x);
                         circle.setAttribute('cy', y);
-                        circle.setAttribute('r', '1.5');
-                        circle.setAttribute('fill', '#c0c0c0');
+                        circle.setAttribute('r', '2');
+                        circle.setAttribute('fill', '#a0a0a0');
                         gridSvg.appendChild(circle);
                     }
                 }
                 
-                // Draw overlay dots if enabled
                 if (overlayMultiplier > 0) {
                     for (let x = overlaySize; x < pageWidth; x += overlaySize) {
                         for (let y = overlaySize; y < pageHeight; y += overlaySize) {
                             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                             circle.setAttribute('cx', x);
                             circle.setAttribute('cy', y);
-                            circle.setAttribute('r', '2.5');
-                            circle.setAttribute('fill', '#bbb');
+                            circle.setAttribute('r', '3');
+                            circle.setAttribute('fill', '#808080');
                             gridSvg.appendChild(circle);
                         }
                     }
@@ -1108,16 +1031,12 @@
                 rulerLeft.style.display = 'block';
                 rulerBottom.style.display = 'block';
                 
-                // Clear existing rulers
                 rulerLeft.innerHTML = '';
                 rulerBottom.innerHTML = '';
                 
-                // Calculate inches based on device DPI
                 const widthInInches = pageWidth / device.dpi;
                 const heightInInches = pageHeight / device.dpi;
-                const pixelsPerQuarterInch = device.dpi / 4;
                 
-                // Create left ruler (vertical, measuring height)
                 for (let i = 0.25; i <= heightInInches; i += 0.25) {
                     const mark = document.createElement('div');
                     mark.className = 'ruler-mark';
@@ -1126,7 +1045,6 @@
                     rulerLeft.appendChild(mark);
                 }
                 
-                // Create bottom ruler (horizontal, measuring width)
                 for (let i = 0.25; i <= widthInInches; i += 0.25) {
                     const mark = document.createElement('div');
                     mark.className = 'ruler-mark';
@@ -1188,51 +1106,7 @@
                 overlayGridLabel.style.display = 'none';
             }
             
-            if (templateType === 'lined') {
-                const lineSpacing = gridSize - 1;
-                contentArea.style.backgroundImage = `
-                    repeating-linear-gradient(
-                        transparent,
-                        transparent ${lineSpacing}px,
-                        #d0d0d0 ${lineSpacing}px,
-                        #d0d0d0 ${gridSize}px
-                    )
-                `;
-                contentArea.style.backgroundSize = '';
-            } else if (templateType === 'grid') {
-                const overlaySize = gridSize * overlayMultiplier;
-                let backgroundImages = `
-                    repeating-linear-gradient(0deg, #e0e0e0 0px, #e0e0e0 1px, transparent 1px, transparent ${gridSize}px),
-                    repeating-linear-gradient(90deg, #e0e0e0 0px, #e0e0e0 1px, transparent 1px, transparent ${gridSize}px)
-                `;
-                
-                if (overlayMultiplier > 0) {
-                    backgroundImages = `
-                        repeating-linear-gradient(0deg, #ddd 0px, #ddd 2px, transparent 2px, transparent ${overlaySize}px),
-                        repeating-linear-gradient(90deg, #ddd 0px, #ddd 2px, transparent 2px, transparent ${overlaySize}px),
-                    ` + backgroundImages;
-                }
-                
-                contentArea.style.backgroundImage = backgroundImages;
-                contentArea.style.backgroundSize = '';
-            } else if (templateType === 'dot-grid') {
-                const overlaySize = gridSize * overlayMultiplier;
-                let backgroundImages = `radial-gradient(circle, #c0c0c0 1.5px, transparent 1.5px)`;
-                let backgroundSizes = `${gridSize}px ${gridSize}px`;
-                
-                if (overlayMultiplier > 0) {
-                    backgroundImages = `
-                        radial-gradient(circle, #bbb 2.5px, transparent 2.5px),
-                    ` + backgroundImages;
-                    backgroundSizes = `${overlaySize}px ${overlaySize}px, ${gridSize}px ${gridSize}px`;
-                }
-                
-                contentArea.style.backgroundImage = backgroundImages;
-                contentArea.style.backgroundSize = backgroundSizes;
-            } else {
-                contentArea.style.backgroundImage = '';
-                contentArea.style.backgroundSize = '';
-            }
+            generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType);
             
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
                 marginLines.style.borderTopWidth = marginTop + 'px';
@@ -1258,7 +1132,6 @@
                 urlText.style.display = 'none';
             }
             
-            // Update rulers
             updateRulers();
         }
         
@@ -1278,7 +1151,6 @@
         overlayGridSelect.addEventListener('change', updateTemplate);
         showRulersCheckbox.addEventListener('change', updateRulers);
         
-        // Initialize
         updatePageSizes();
         updateRecommendation();
     </script>
