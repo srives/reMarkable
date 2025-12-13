@@ -71,6 +71,8 @@
             position: absolute;
             background: white;
             z-index: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         
         .margin-lines {
@@ -187,6 +189,12 @@
             .template-page {
                 page-break-after: always;
                 margin: 0;
+            }
+            
+            .content-area {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
         }
         
@@ -444,7 +452,7 @@
                 <option value="10">10 squares</option>
             </select>
             
-            <button onclick="window.print()">Print/Save as PDF</button>
+            <button onclick="printTemplate()">Print/Save as PDF</button>
         </div>
     </div>
     
@@ -503,11 +511,36 @@
                 dpi: 226,
                 sizes: [
                     { value: '1872,1404', label: 'Full reMarkable 1/2 (8.27" × 6.20")' },
+                    // Mass Market
+                    { value: '961,1553', label: 'Mass Market / Pocket Book Portrait (4.25" × 6.87")' },
+                    { value: '1553,961', label: 'Mass Market / Pocket Book Landscape (6.87" × 4.25")' },
+                    // Fiction & Novellas
+                    { value: '1130,1808', label: 'Fiction / Novella Portrait (5" × 8")' },
+                    { value: '1808,1130', label: 'Fiction / Novella Landscape (8" × 5")' },
+                    { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
+                    { value: '1808,1186', label: 'Fiction Landscape (8" × 5.25")' },
+                    { value: '1243,1921', label: 'Digest Portrait (5.5" × 8.5")' },
+                    { value: '1921,1243', label: 'Digest Landscape (8.5" × 5.5")' },
+                    { value: '1356,2034', label: 'US Trade Portrait (6" × 9")' },
+                    { value: '2034,1356', label: 'US Trade Landscape (9" × 6")' },
+                    // A-Series
+                    { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
                     { value: '1869,1317', label: 'A5 Landscape (8.27" × 5.83")' },
                     { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
                     { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
-                    { value: '1356,1243', label: 'US Trade Landscape (6" × 5.5")' },
-                    { value: '1243,904', label: 'Digest Landscape (5.5" × 4")' }
+                    // UK B-Format
+                    { value: '1146,1763', label: 'UK B-Format Portrait (5.07" × 7.8")' },
+                    { value: '1763,1146', label: 'UK B-Format Landscape (7.8" × 5.07")' },
+                    // Royal
+                    { value: '1388,2081', label: 'Royal Portrait (6.14" × 9.21")' },
+                    // Non-Fiction & Children's
+                    { value: '1582,2260', label: 'Non-Fiction / Children\'s Portrait (7" × 10")' },
+                    { value: '1808,2260', label: 'Large Format Portrait (8" × 10")' },
+                    { value: '1921,2486', label: 'Textbook / Manual Portrait (8.5" × 11")' },
+                    // Square formats
+                    { value: '1582,1582', label: 'Square Small (7" × 7")' },
+                    { value: '1808,1808', label: 'Square Medium (8" × 8")' },
+                    { value: '1921,1921', label: 'Square Large (8.5" × 8.5")' }
                 ]
             },
             rmpro: {
@@ -517,11 +550,36 @@
                 dpi: 226,
                 sizes: [
                     { value: '1872,1404', label: 'Full reMarkable Pro (8.27" × 6.20")' },
+                    // Mass Market
+                    { value: '961,1553', label: 'Mass Market / Pocket Book Portrait (4.25" × 6.87")' },
+                    { value: '1553,961', label: 'Mass Market / Pocket Book Landscape (6.87" × 4.25")' },
+                    // Fiction & Novellas
+                    { value: '1130,1808', label: 'Fiction / Novella Portrait (5" × 8")' },
+                    { value: '1808,1130', label: 'Fiction / Novella Landscape (8" × 5")' },
+                    { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
+                    { value: '1808,1186', label: 'Fiction Landscape (8" × 5.25")' },
+                    { value: '1243,1921', label: 'Digest Portrait (5.5" × 8.5")' },
+                    { value: '1921,1243', label: 'Digest Landscape (8.5" × 5.5")' },
+                    { value: '1356,2034', label: 'US Trade Portrait (6" × 9")' },
+                    { value: '2034,1356', label: 'US Trade Landscape (9" × 6")' },
+                    // A-Series
+                    { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
                     { value: '1869,1317', label: 'A5 Landscape (8.27" × 5.83")' },
                     { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
                     { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
-                    { value: '1356,1243', label: 'US Trade Landscape (6" × 5.5")' },
-                    { value: '1243,904', label: 'Digest Landscape (5.5" × 4")' }
+                    // UK B-Format
+                    { value: '1146,1763', label: 'UK B-Format Portrait (5.07" × 7.8")' },
+                    { value: '1763,1146', label: 'UK B-Format Landscape (7.8" × 5.07")' },
+                    // Royal
+                    { value: '1388,2081', label: 'Royal Portrait (6.14" × 9.21")' },
+                    // Non-Fiction & Children's
+                    { value: '1582,2260', label: 'Non-Fiction / Children\'s Portrait (7" × 10")' },
+                    { value: '1808,2260', label: 'Large Format Portrait (8" × 10")' },
+                    { value: '1921,2486', label: 'Textbook / Manual Portrait (8.5" × 11")' },
+                    // Square formats
+                    { value: '1582,1582', label: 'Square Small (7" × 7")' },
+                    { value: '1808,1808', label: 'Square Medium (8" × 8")' },
+                    { value: '1921,1921', label: 'Square Large (8.5" × 8.5")' }
                 ]
             },
             paperpromove: {
@@ -531,28 +589,91 @@
                 dpi: 264,
                 sizes: [
                     { value: '1696,954', label: 'Full Paper Pro Move (6.42" × 3.61")' },
-                    { value: '1540,880', label: 'Wide Format (5.83" × 3.33")' },
-                    { value: '1320,768', label: 'Pocket Size (5" × 2.91")' },
-                    { value: '1090,768', label: 'A7 Portrait (4.13" × 2.91")' },
-                    { value: '1188,864', label: 'Compact Landscape (4.5" × 3.27")' },
-                    { value: '1056,768', label: 'Mini Digest (4" × 2.91")' }
+                    // Compact sizes that fit
+                    { value: '1122,1814', label: 'Mass Market Portrait (4.25" × 6.87")' },
+                    { value: '1320,2112', label: 'Fiction Portrait (5" × 8")' },
+                    { value: '1386,2112', label: 'Fiction Portrait (5.25" × 8")' },
+                    { value: '1452,2244', label: 'Digest Portrait (5.5" × 8.5")' },
+                    { value: '1584,2376', label: 'US Trade Portrait (6" × 9")' },
+                    // A-Series
+                    { value: '1540,2185', label: 'A5 Portrait (5.83" × 8.27")' },
+                    { value: '1090,1540', label: 'A6 Portrait (4.13" × 5.83")' },
+                    { value: '1540,1090', label: 'A6 Landscape (5.83" × 4.13")' },
+                    // UK Format
+                    { value: '1339,2059', label: 'UK B-Format Portrait (5.07" × 7.8")' },
+                    // Compact formats
+                    { value: '1056,792', label: 'Mini Landscape (4" × 3")' },
+                    { value: '1320,1056', label: 'Compact Portrait (5" × 4")' }
                 ]
             }
         };
         
         const defaultMargins = {
+            // Full device sizes
             '1872,1404': { top: 135.6, bottom: 146.9, left: 135.6, right: 135.6 },
-            '1869,1317': { top: 124.3, bottom: 135.6, left: 135.6, right: 113 },
-            '933,1317': { top: 113, bottom: 124.3, left: 90.4, right: 90.4 },
-            '1317,933': { top: 90.4, bottom: 101.7, left: 113, right: 90.4 },
-            '1356,1243': { top: 113, bottom: 135.6, left: 135.6, right: 113 },
-            '1243,904': { top: 101.7, bottom: 113, left: 113, right: 90.4 },
             '1696,954': { top: 79.2, bottom: 92.4, left: 92.4, right: 79.2 },
-            '1540,880': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
-            '1320,768': { top: 66, bottom: 79.2, left: 66, right: 66 },
-            '1090,768': { top: 66, bottom: 79.2, left: 66, right: 66 },
-            '1188,864': { top: 66, bottom: 79.2, left: 79.2, right: 66 },
-            '1056,768': { top: 66, bottom: 79.2, left: 66, right: 66 }
+            
+            // Mass Market / Pocket Book (4.25" × 6.87")
+            '961,1553': { top: 90.4, bottom: 101.7, left: 90.4, right: 90.4 },
+            '1553,961': { top: 67.8, bottom: 79.1, left: 90.4, right: 79.1 },
+            '1122,1814': { top: 92.4, bottom: 105.6, left: 92.4, right: 92.4 },
+            
+            // Fiction / Novella (5" × 8")
+            '1130,1808': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
+            '1808,1130': { top: 79.1, bottom: 90.4, left: 113, right: 90.4 },
+            '1320,2112': { top: 105.6, bottom: 118.8, left: 105.6, right: 92.4 },
+            
+            // Fiction (5.25" × 8")
+            '1186,1808': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
+            '1808,1186': { top: 79.1, bottom: 90.4, left: 113, right: 90.4 },
+            '1386,2112': { top: 105.6, bottom: 118.8, left: 105.6, right: 92.4 },
+            
+            // Digest (5.5" × 8.5")
+            '1243,1921': { top: 113, bottom: 124.3, left: 113, right: 101.7 },
+            '1921,1243': { top: 90.4, bottom: 101.7, left: 124.3, right: 101.7 },
+            '1452,2244': { top: 118.8, bottom: 132, left: 118.8, right: 105.6 },
+            
+            // US Trade (6" × 9")
+            '1356,2034': { top: 124.3, bottom: 135.6, left: 124.3, right: 113 },
+            '2034,1356': { top: 101.7, bottom: 113, left: 135.6, right: 113 },
+            '1584,2376': { top: 132, bottom: 145.2, left: 132, right: 118.8 },
+            
+            // A5 (5.83" × 8.27")
+            '1317,1869': { top: 124.3, bottom: 135.6, left: 113, right: 113 },
+            '1869,1317': { top: 113, bottom: 124.3, left: 135.6, right: 113 },
+            '1540,2185': { top: 132, bottom: 145.2, left: 118.8, right: 118.8 },
+            
+            // A6 (4.13" × 5.83")
+            '933,1317': { top: 90.4, bottom: 101.7, left: 90.4, right: 79.1 },
+            '1317,933': { top: 79.1, bottom: 90.4, left: 101.7, right: 79.1 },
+            '1090,1540': { top: 92.4, bottom: 105.6, left: 92.4, right: 79.2 },
+            '1540,1090': { top: 79.2, bottom: 92.4, left: 105.6, right: 79.2 },
+            
+            // UK B-Format (5.07" × 7.8")
+            '1146,1763': { top: 101.7, bottom: 113, left: 101.7, right: 90.4 },
+            '1763,1146': { top: 79.1, bottom: 90.4, left: 113, right: 90.4 },
+            '1339,2059': { top: 105.6, bottom: 118.8, left: 105.6, right: 92.4 },
+            
+            // Royal (6.14" × 9.21")
+            '1388,2081': { top: 124.3, bottom: 135.6, left: 124.3, right: 113 },
+            
+            // Non-Fiction / Children's (7" × 10")
+            '1582,2260': { top: 135.6, bottom: 146.9, left: 135.6, right: 124.3 },
+            
+            // Large Format (8" × 10")
+            '1808,2260': { top: 135.6, bottom: 146.9, left: 146.9, right: 135.6 },
+            
+            // Textbook / Manual (8.5" × 11")
+            '1921,2486': { top: 146.9, bottom: 158.2, left: 146.9, right: 135.6 },
+            
+            // Square formats
+            '1582,1582': { top: 113, bottom: 124.3, left: 113, right: 113 },
+            '1808,1808': { top: 124.3, bottom: 135.6, left: 124.3, right: 124.3 },
+            '1921,1921': { top: 135.6, bottom: 146.9, left: 135.6, right: 135.6 },
+            
+            // Paper Pro Move compact formats
+            '1056,792': { top: 66, bottom: 79.2, left: 66, right: 66 },
+            '1320,1056': { top: 79.2, bottom: 92.4, left: 79.2, right: 66 }
         };
         
         const marginRecommendations = {
@@ -664,15 +785,32 @@
             
             pageSizeSelect.innerHTML = '';
             device.sizes.forEach(size => {
+                const [width, height] = size.value.split(',').map(Number);
                 const option = document.createElement('option');
                 option.value = size.value;
-                option.textContent = size.label;
+                
+                // Check if size exceeds device dimensions
+                if (width > device.width || height > device.height) {
+                    option.textContent = size.label + ' (Too Large)';
+                    option.disabled = true;
+                    option.style.color = '#999';
+                } else {
+                    option.textContent = size.label;
+                }
+                
                 pageSizeSelect.appendChild(option);
             });
             
+            // Try to maintain similar selection or default to first non-disabled
             const sameIndex = device.sizes.findIndex(s => s.value === currentValue);
             if (sameIndex >= 0) {
-                pageSizeSelect.selectedIndex = sameIndex;
+                const [width, height] = currentValue.split(',').map(Number);
+                if (width <= device.width && height <= device.height) {
+                    pageSizeSelect.selectedIndex = sameIndex;
+                } else {
+                    // Select first non-disabled option
+                    pageSizeSelect.selectedIndex = 0;
+                }
             } else {
                 pageSizeSelect.selectedIndex = 0;
             }
@@ -709,6 +847,32 @@
             `;
             document.head.appendChild(style);
         }
+        
+        function printTemplate() {
+            // Get the selected page size label for the filename
+            const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
+            const pageLabel = selectedOption.textContent.trim();
+            
+            // Clean up the label to make it filename-friendly
+            const filename = pageLabel
+                .replace(/[^\w\s\-\(\)\.]/g, '') // Remove special chars except spaces, hyphens, parens, dots
+                .replace(/\s+/g, '_')             // Replace spaces with underscores
+                .replace(/_{2,}/g, '_');          // Replace multiple underscores with single
+            
+            // Set document title (browsers use this as default filename)
+            const originalTitle = document.title;
+            document.title = filename;
+            
+            // Print
+            window.print();
+            
+            // Restore original title after a delay
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
+        
+        window.printTemplate = printTemplate;
         
         function updateTemplate() {
             const device = devices[deviceTypeSelect.value];
