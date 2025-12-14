@@ -331,7 +331,7 @@
                 <option value="case">Case Binding (Hardcover)</option>
             </select>
             
-            <label for="platform" style="margin-left: 20px;">Platform:</label>
+            <label for="platform" style="margin-left: 20px;">Publisher/Platform:</label>
             <select id="platform">
                 <option value="general">General Publishing</option>
                 <option value="kdp">Amazon KDP</option>
@@ -341,13 +341,15 @@
                 <option value="d2d">Draft2Digital</option>
                 <option value="blurb">Blurb</option>
                 <option value="bookbaby">BookBaby</option>
+                <option value="canva">Canva Print</option>
             </select>
             
             <button onclick="applyRecommendedMargins()" style="margin-left: 20px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #28a745; color: white; cursor: pointer;">Apply Margin Recommendations</button>
         </div>
         
         <div id="marginRecommendation" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px; font-size: 13px; display: none;">
-            <strong>Recommended Margins:</strong> <span id="recommendationText"></span>
+            <strong>Recommended Margins:</strong><br><br>
+            <span id="recommendationText"></span>
         </div>
         
         <div style="margin-bottom: 10px;">
@@ -565,12 +567,12 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.8</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.12</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied when Scale is "Yes".</li>
-            <li><strong>Binding Type & Platform:</strong> View margin recommendations for different binding types and publishing platforms. Click "Apply Recommended Margins" to use suggested defaults.</li>
+            <li><strong>Binding Type & Publisher/Platform:</strong> View margin recommendations for different binding types and publishing platforms. Click "Apply Recommended Margins" to use suggested defaults.</li>
             <li><strong>Margins:</strong> Adjust individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with borders (gray for reMarkable 1/2, red for color devices). The usable area (width × height inside margins) is displayed next to the Right margin control.</li>
             <li><strong>Template Type:</strong> Select your preferred template style (lined, grid, dot grid, etc.).</li>
             <li><strong>Line/Grid Size:</strong> For lined, grid, or dot-grid templates, choose the spacing in inches (0.05" to 1.25").</li>
@@ -735,23 +737,65 @@
             binding: {
                 perfect: {
                     name: "Perfect Binding",
-                    desc: "Inner/gutter margin should be 0.625\"-0.75\" to account for spine curve. Top: 0.5\"-0.625\", Bottom: 0.625\"-0.75\" (larger than top), Outer: 0.5\"-0.625\"."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (!margins) return "Not found";
+
+                        // Perfect binding needs gutter of 0.625"-0.875" depending on page count
+                        const gutterMin = Math.max(margins.left, 0.625);
+                        const gutterMax = gutterMin + 0.125;
+                        return `For this size: Gutter ${gutterMin}\"-${gutterMax}\" (increases with page count), Top ${margins.top}\", Bottom ${margins.bottom}\", Outer ${margins.right}\". Minimum 0.375\" gutter, pages glued into spine.`;
+                    }
                 },
                 saddle: {
                     name: "Saddle Stitch",
-                    desc: "Can use smaller, more equal margins since pages lie flatter. All margins: 0.375\"-0.5\". Inner margin can be slightly smaller than perfect binding."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (!margins) return "Not found";
+
+                        // Saddle stitch can use smaller, more equal margins (pages lie flat)
+                        const minMargin = 0.25;
+                        const avgMargin = Math.max(minMargin, Math.min(margins.top, margins.bottom, margins.left, margins.right) - 0.125);
+                        return `For this size: All margins ${avgMargin.toFixed(2)}\"-${(avgMargin + 0.125).toFixed(2)}\" (more equal). Pages lie flat when folded. Best for 8-60 pages. Requires page count in multiples of 4.`;
+                    }
                 },
                 spiral: {
                     name: "Spiral/Coil Binding",
-                    desc: "Inner margin needs 0.5\"-0.75\" for binding holes. Other margins: 0.375\"-0.5\". Pages lie completely flat."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (!margins) return "Not found";
+
+                        // Spiral needs 0.5"-0.625" gutter for holes
+                        const gutter = 0.625;
+                        const other = Math.max(0.375, margins.right);
+                        return `For this size: Gutter ${gutter}\" (for punch holes, drills 1/4\" in), Other margins ${other}\". Pages lie completely flat and rotate 360°. Holes punch 3/16\"-1/4\" into gutter.`;
+                    }
                 },
                 wireo: {
                     name: "Wire-O Binding",
-                    desc: "Similar to spiral. Inner margin: 0.5\"-0.75\" for wire. Other margins: 0.375\"-0.5\". Pages lay flat and can flip 360°."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (!margins) return "Not found";
+
+                        // Wire-O needs 0.5"-0.875" gutter for square holes
+                        const gutter = 0.75;
+                        const other = Math.max(0.25, margins.right);
+                        return `For this size: Gutter ${gutter}\"-0.875\" (for wire loops, punches 1/4\" in), Other margins ${other}\". Square holes. Pages lay flat and flip 360°. Recommended: 0.875\" gutter, 0.25\" others.`;
+                    }
                 },
                 case: {
                     name: "Case Binding (Hardcover)",
-                    desc: "More generous margins due to rigid cover. Inner/gutter: 0.75\"-1\", Top: 0.625\"-0.75\", Bottom: 0.75\"-0.875\", Outer: 0.625\"-0.75\"."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (!margins) return "Not found";
+
+                        // Case binding needs generous margins: 0.75"-1" gutter
+                        const gutterMin = Math.max(margins.left, 0.75);
+                        const gutterMax = Math.max(gutterMin, 1.0);
+                        const topMin = Math.max(margins.top, 0.625);
+                        const bottomMin = Math.max(margins.bottom, 0.75);
+                        return `For this size: Gutter ${gutterMin}\"-${gutterMax}\" (rigid spine), Top ${topMin}\", Bottom ${bottomMin}\", Outer ${Math.max(margins.right, 0.625)}\". More generous margins for premium feel. 6mm margin each side of gutter.`;
+                    }
                 }
             },
             platform: {
@@ -834,6 +878,19 @@
                         }
                         return "Minimum 0.5\" all sides recommended. Professional standard: Inside 0.75\"-0.875\", Outside 0.5\", Top 0.625\", Bottom 0.75\".";
                     }
+                },
+                canva: {
+                    name: "Canva Print",
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            // Canva requires minimum 0.25" from trim, with gutter depending on binding type
+                            const minMargin = Math.max(margins.top, margins.bottom, margins.right, 0.25);
+                            const gutter = Math.max(margins.left, 0.6); // 0.6" for perfect bound
+                            return `For this size: Gutter ${gutter}\" (0.3\" smyth sewn, 0.6\" perfect bound), Other margins ${minMargin}\". Canva adds 0.125\" bleed automatically. Keep all text/elements minimum 0.25\" from trim lines.`;
+                        }
+                        return "Minimum 0.25\" all sides from trim. Smyth sewn: 0.3\" gutter, Perfect bound: 0.6\" gutter. Canva adds 0.125\" (3mm) bleed on all sides automatically.";
+                    }
                 }
             }
         };
@@ -843,12 +900,16 @@
             const platform = marginRecommendations.platform[platformSelect.value];
             const currentPageSize = pageSizeSelect.value;
 
+            const bindingDesc = typeof binding.getDesc === 'function'
+                ? binding.getDesc(currentPageSize)
+                : binding.desc;
+
             const platformDesc = typeof platform.getDesc === 'function'
                 ? platform.getDesc(currentPageSize)
                 : platform.desc;
 
             recommendationText.innerHTML = `
-                <div style="margin-bottom: 8px;"><strong>${binding.name}:</strong> ${binding.desc}</div>
+                <div style="margin-bottom: 8px;"><strong>${binding.name}:</strong> ${bindingDesc}</div>
                 <div><strong>${platform.name}:</strong> ${platformDesc}</div>
             `;
             marginRecommendation.style.display = 'block';
