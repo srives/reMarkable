@@ -493,7 +493,7 @@
                 <option value="339">1.50"</option>
             </select>
 
-            <button onclick="resetMargins()" style="margin-left: 10px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #dc3545; color: white; cursor: pointer;">Reset Margins</button>
+            <button onclick="resetMargins()" style="margin-left: 10px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #ff69b4; color: white; cursor: pointer;">Reset Margins</button>
 
             <span id="usableArea" style="margin-left: 20px; font-weight: bold; color: #007bff;"></span>
         </div>
@@ -554,11 +554,13 @@
             
             <label for="showRulers" style="margin-left: 20px;">Show Rulers:</label>
             <input type="checkbox" id="showRulers">
-            
+
             <label for="showMarginDimensions" style="margin-left: 20px;">Show Wd × Ht:</label>
             <input type="checkbox" id="showMarginDimensions">
 
-            <button onclick="printTemplate()">Print/Save as PDF</button>
+            <button onclick="savePDF()" style="background: #28a745; margin-left: 20px;">Save PDF</button>
+            <button onclick="saveSVG()" style="background: #17a2b8; margin-left: 10px;">Save SVG</button>
+            <button onclick="savePNG()" style="background: #ffc107; color: #000; margin-left: 10px;">Save PNG</button>
         </div>
 
         <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-left: 4px solid #6c757d; border-radius: 4px; font-size: 12px; font-family: monospace;">
@@ -567,7 +569,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.12</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.16</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
@@ -579,9 +581,9 @@
             <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares for major/minor grid divisions.</li>
             <li><strong>Show Rulers:</strong> Check this box to display inch measurements along the left and bottom edges (marks every 0.25").</li>
             <li><strong>Show Wd × Ht:</strong> Check this box to display the usable dimensions within the margin areas (width in top margin, height in right margin).</li>
-            <li><strong>Export:</strong> Click "Print/Save as PDF" and select "Save as PDF" in the dialog.</li>
+            <li><strong>Export:</strong> Use "Save PDF" for print-ready PDFs (opens print dialog), "Save SVG" for vector format, or "Save PNG" for raster images.</li>
         </ul>
-        Transfer the PDF to your reMarkable device via the mobile app or desktop software.
+        Transfer the SVG to your reMarkable device via a template installer tool: eInkPads Template Installer, eInkPads Desktop App, or Freeremarkabletools.net
     </div>
     
     <div class="template-container">
@@ -1075,26 +1077,243 @@
             document.head.appendChild(style);
         }
         
-        function printTemplate() {
+        function savePDF() {
             const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
             const pageLabel = selectedOption.textContent.trim();
-            
+
             const filename = pageLabel
                 .replace(/[^\w\s\-\(\)\.]/g, '')
                 .replace(/\s+/g, '_')
                 .replace(/_{2,}/g, '_');
-            
+
             const originalTitle = document.title;
             document.title = filename;
-            
+
             window.print();
-            
+
             setTimeout(() => {
                 document.title = originalTitle;
             }, 1000);
         }
-        
-        window.printTemplate = printTemplate;
+
+        function saveSVG() {
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
+            const pageLabel = selectedOption.textContent.trim();
+
+            const filename = pageLabel
+                .replace(/[^\w\s\-\(\)\.]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/_{2,}/g, '_') + '.svg';
+
+            // Get current page dimensions
+            const pageWidth = device.width;
+            const pageHeight = device.height;
+
+            // Create SVG wrapper
+            let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}" height="${pageHeight}" viewBox="0 0 ${pageWidth} ${pageHeight}">
+    <rect width="${pageWidth}" height="${pageHeight}" fill="#f5f5f5"/>
+`;
+
+            // Get selected page size
+            let [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+            let offsetX = 0, offsetY = 0;
+            if (isScaled) {
+                offsetX = (device.width - selectedPageWidth) / 2;
+                offsetY = (device.height - selectedPageHeight) / 2;
+            }
+
+            // Add gray centering margins if scaled
+            if (offsetX > 0 || offsetY > 0) {
+                svgContent += `    <!-- Gray centering margins -->
+    <rect x="0" y="0" width="${offsetX}" height="${pageHeight}" fill="rgba(0,0,0,0.15)"/>
+    <rect x="${pageWidth - offsetX}" y="0" width="${offsetX}" height="${pageHeight}" fill="rgba(0,0,0,0.15)"/>
+    <rect x="0" y="0" width="${pageWidth}" height="${offsetY}" fill="rgba(0,0,0,0.15)"/>
+    <rect x="0" y="${pageHeight - offsetY}" width="${pageWidth}" height="${offsetY}" fill="rgba(0,0,0,0.15)"/>
+`;
+            }
+
+            // Add white content area
+            const contentX = isScaled ? offsetX : 0;
+            const contentY = isScaled ? offsetY : 0;
+            const contentWidth = isScaled ? selectedPageWidth : pageWidth;
+            const contentHeight = isScaled ? selectedPageHeight : pageHeight;
+
+            svgContent += `    <!-- Content area -->
+    <rect x="${contentX}" y="${contentY}" width="${contentWidth}" height="${contentHeight}" fill="white"/>
+`;
+
+            // Add grid/lines from gridSvg
+            const gridSvgContent = gridSvg.innerHTML;
+            if (gridSvgContent) {
+                svgContent += `    <!-- Grid -->
+    <g transform="translate(${contentX}, ${contentY})">
+${gridSvgContent}
+    </g>
+`;
+            }
+
+            // Add margin borders if present
+            const marginTop = parseFloat(marginTopSelect.value);
+            const marginBottom = parseFloat(marginBottomSelect.value);
+            const marginLeft = parseFloat(marginLeftSelect.value);
+            const marginRight = parseFloat(marginRightSelect.value);
+
+            if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
+                const borderColor = deviceTypeSelect.value === 'rm2' ? 'rgba(100, 100, 100, 0.4)' : 'rgba(255, 100, 100, 0.3)';
+
+                // Draw margin borders
+                if (marginTop > 0) {
+                    svgContent += `    <line x1="${contentX}" y1="${contentY + marginTop}" x2="${contentX + contentWidth}" y2="${contentY + marginTop}" stroke="${borderColor}" stroke-width="1"/>
+`;
+                }
+                if (marginBottom > 0) {
+                    svgContent += `    <line x1="${contentX}" y1="${contentY + contentHeight - marginBottom}" x2="${contentX + contentWidth}" y2="${contentY + contentHeight - marginBottom}" stroke="${borderColor}" stroke-width="1"/>
+`;
+                }
+                if (marginLeft > 0) {
+                    svgContent += `    <line x1="${contentX + marginLeft}" y1="${contentY}" x2="${contentX + marginLeft}" y2="${contentY + contentHeight}" stroke="${borderColor}" stroke-width="1"/>
+`;
+                }
+                if (marginRight > 0) {
+                    svgContent += `    <line x1="${contentX + contentWidth - marginRight}" y1="${contentY}" x2="${contentX + contentWidth - marginRight}" y2="${contentY + contentHeight}" stroke="${borderColor}" stroke-width="1"/>
+`;
+                }
+            }
+
+            svgContent += `</svg>`;
+
+            // Download SVG
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function savePNG() {
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
+            const pageLabel = selectedOption.textContent.trim();
+
+            const filename = pageLabel
+                .replace(/[^\w\s\-\(\)\.]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/_{2,}/g, '_') + '.png';
+
+            // Get current page dimensions
+            const pageWidth = device.width;
+            const pageHeight = device.height;
+
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = pageWidth;
+            canvas.height = pageHeight;
+            const ctx = canvas.getContext('2d');
+
+            // Fill background
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(0, 0, pageWidth, pageHeight);
+
+            // Get selected page size
+            let [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+            let offsetX = 0, offsetY = 0;
+            if (isScaled) {
+                offsetX = (device.width - selectedPageWidth) / 2;
+                offsetY = (device.height - selectedPageHeight) / 2;
+            }
+
+            // Draw gray centering margins if scaled
+            if (offsetX > 0 || offsetY > 0) {
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.fillRect(0, 0, offsetX, pageHeight); // Left
+                ctx.fillRect(pageWidth - offsetX, 0, offsetX, pageHeight); // Right
+                ctx.fillRect(0, 0, pageWidth, offsetY); // Top
+                ctx.fillRect(0, pageHeight - offsetY, pageWidth, offsetY); // Bottom
+            }
+
+            // Draw white content area
+            const contentX = isScaled ? offsetX : 0;
+            const contentY = isScaled ? offsetY : 0;
+            const contentWidth = isScaled ? selectedPageWidth : pageWidth;
+            const contentHeight = isScaled ? selectedPageHeight : pageHeight;
+
+            ctx.fillStyle = 'white';
+            ctx.fillRect(contentX, contentY, contentWidth, contentHeight);
+
+            // Convert SVG to image and draw it
+            const svgData = new XMLSerializer().serializeToString(gridSvg);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const svgUrl = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            img.onload = function() {
+                // Draw grid
+                ctx.drawImage(img, contentX, contentY, contentWidth, contentHeight);
+
+                // Draw margin borders if present
+                const marginTop = parseFloat(marginTopSelect.value);
+                const marginBottom = parseFloat(marginBottomSelect.value);
+                const marginLeft = parseFloat(marginLeftSelect.value);
+                const marginRight = parseFloat(marginRightSelect.value);
+
+                if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
+                    ctx.strokeStyle = deviceTypeSelect.value === 'rm2' ? 'rgba(100, 100, 100, 0.4)' : 'rgba(255, 100, 100, 0.3)';
+                    ctx.lineWidth = 1;
+
+                    if (marginTop > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(contentX, contentY + marginTop);
+                        ctx.lineTo(contentX + contentWidth, contentY + marginTop);
+                        ctx.stroke();
+                    }
+                    if (marginBottom > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(contentX, contentY + contentHeight - marginBottom);
+                        ctx.lineTo(contentX + contentWidth, contentY + contentHeight - marginBottom);
+                        ctx.stroke();
+                    }
+                    if (marginLeft > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(contentX + marginLeft, contentY);
+                        ctx.lineTo(contentX + marginLeft, contentY + contentHeight);
+                        ctx.stroke();
+                    }
+                    if (marginRight > 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(contentX + contentWidth - marginRight, contentY);
+                        ctx.lineTo(contentX + contentWidth - marginRight, contentY + contentHeight);
+                        ctx.stroke();
+                    }
+                }
+
+                // Convert canvas to PNG and download
+                canvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(svgUrl);
+                }, 'image/png');
+            };
+
+            img.src = svgUrl;
+        }
+
+        window.savePDF = savePDF;
+        window.saveSVG = saveSVG;
+        window.savePNG = savePNG;
         
         function generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType, isScaled, pageWidthInInches, pageHeightInInches) {
             gridSvg.innerHTML = '';
