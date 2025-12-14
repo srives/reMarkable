@@ -553,7 +553,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.103</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.105</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
@@ -627,7 +627,6 @@
                     { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
                     { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
                     { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
-                    { value: '1317,933', label: 'A6 Landscape (5.83" × 4.13")' },
                     { value: '1146,1763', label: 'UK B-Format Portrait (5.07" × 7.8")' },
                     { value: '1388,2081', label: 'Royal Portrait (6.14" × 9.21")' },
                     { value: '1130,1130', label: 'Square (5" × 5")' },
@@ -642,23 +641,14 @@
                 sizes: [
                     { value: '1620,2160', label: 'Full reMarkable Pro (7.07" × 9.43")' },
                     { value: '973,1573', label: 'Mass Market Portrait (4.25" × 6.87")' },
-                    { value: '1573,973', label: 'Mass Market Landscape (6.87" × 4.25")' },
                     { value: '1145,1832', label: 'Fiction Portrait (5" × 8")' },
-                    { value: '1832,1145', label: 'Fiction Landscape (8" × 5")' },
                     { value: '1202,1832', label: 'Fiction Portrait (5.25" × 8")' },
-                    { value: '1832,1202', label: 'Fiction Landscape (8" × 5.25")' },
                     { value: '1260,1947', label: 'Digest Portrait (5.5" × 8.5")' },
-                    { value: '1947,1260', label: 'Digest Landscape (8.5" × 5.5")' },
                     { value: '1374,2061', label: 'US Trade Portrait (6" × 9")' },
-                    { value: '2061,1374', label: 'US Trade Landscape (9" × 6")' },
                     { value: '1335,1894', label: 'A5 Portrait (5.83" × 8.27")' },
-                    { value: '1894,1335', label: 'A5 Landscape (8.27" × 5.83")' },
                     { value: '946,1335', label: 'A6 Portrait (4.13" × 5.83")' },
-                    { value: '1335,946', label: 'A6 Landscape (5.83" × 4.13")' },
                     { value: '1161,1786', label: 'UK B-Format Portrait (5.07" × 7.8")' },
-                    { value: '1786,1161', label: 'UK B-Format Landscape (7.8" × 5.07")' },
                     { value: '1406,2109', label: 'Royal Portrait (6.14" × 9.21")' },
-                    { value: '2109,1406', label: 'Royal Landscape (9.21" × 6.14")' },
                     { value: '1145,1145', label: 'Square (5" × 5")' },
                     { value: '1374,1374', label: 'Square (6" × 6")' },
                     { value: '1603,1603', label: 'Square (7" × 7")' }
@@ -666,15 +656,14 @@
             },
             paperpromove: {
                 name: 'Paper Pro Move',
-                width: 1696,
-                height: 954,
+                width: 954,
+                height: 1696,
                 dpi: 264,
                 sizes: [
-                    { value: '1696,954', label: 'Full Paper Pro Move (6.42" × 3.61")' },
-                    { value: '1122,792', label: 'Compact Landscape (4.25" × 3")' },
-                    { value: '1320,792', label: 'Medium Landscape (5" × 3")' },
-                    { value: '1584,792', label: 'Wide Landscape (6" × 3")' },
-                    { value: '792,792', label: 'Square (3" × 3")' }
+                    { value: '953,1695', label: 'Full Paper Pro Move (3.61" × 6.42")' },
+                    { value: '792,1122', label: 'Compact (3" × 4.25")' },
+                    { value: '792,1320', label: 'Medium (3" × 5")' },
+                    { value: '792,1584', label: 'Tall (3" × 6")' }
                 ]
             }
         };
@@ -682,43 +671,32 @@
         const defaultMarginsInches = {
             '1404,1872': { top: 0.6, bottom: 0.65, left: 0.6, right: 0.6 },
             '1620,2160': { top: 0.6, bottom: 0.65, left: 0.65, right: 0.6 },
-            '1696,954': { top: 0.3, bottom: 0.35, left: 0.35, right: 0.3 },
             '961,1553': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '973,1573': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
-            '1573,973': { top: 0.3, bottom: 0.35, left: 0.45, right: 0.35 },
             '1122,1814': { top: 0.35, bottom: 0.4, left: 0.35, right: 0.35 },
             '1130,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1145,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
-            '1832,1145': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
             '1186,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1202,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
-            '1832,1202': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
             '1260,1947': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.45 },
-            '1947,1260': { top: 0.4, bottom: 0.45, left: 0.55, right: 0.45 },
             '1374,2061': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
-            '2061,1374': { top: 0.45, bottom: 0.5, left: 0.6, right: 0.5 },
             '1317,1869': { top: 0.55, bottom: 0.6, left: 0.5, right: 0.5 },
             '1335,1894': { top: 0.55, bottom: 0.6, left: 0.5, right: 0.5 },
-            '1894,1335': { top: 0.5, bottom: 0.55, left: 0.6, right: 0.5 },
             '933,1317': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.35 },
             '946,1335': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.35 },
-            '1317,933': { top: 0.35, bottom: 0.4, left: 0.45, right: 0.35 },
-            '1335,946': { top: 0.35, bottom: 0.4, left: 0.45, right: 0.35 },
             '1146,1763': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1161,1786': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
-            '1786,1161': { top: 0.35, bottom: 0.4, left: 0.5, right: 0.4 },
             '1388,2081': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
             '1406,2109': { top: 0.55, bottom: 0.6, left: 0.55, right: 0.5 },
-            '2109,1406': { top: 0.45, bottom: 0.5, left: 0.6, right: 0.5 },
             '1130,1130': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '1145,1145': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '1356,1356': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.45 },
             '1374,1374': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.45 },
             '1603,1603': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.5 },
-            '1122,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
-            '1320,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
-            '1584,792': { top: 0.25, bottom: 0.3, left: 0.3, right: 0.25 },
-            '792,792': { top: 0.25, bottom: 0.3, left: 0.25, right: 0.25 }
+            '953,1695': { top: 0.3, bottom: 0.35, left: 0.3, right: 0.3 },
+            '792,1122': { top: 0.25, bottom: 0.3, left: 0.25, right: 0.25 },
+            '792,1320': { top: 0.25, bottom: 0.3, left: 0.25, right: 0.25 },
+            '792,1584': { top: 0.3, bottom: 0.35, left: 0.25, right: 0.25 }
         };
         
         const marginRecommendations = {
