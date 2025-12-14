@@ -493,6 +493,34 @@
                 <option value="339">1.50"</option>
             </select>
 
+            <label for="marginColor" style="margin-left: 10px;">Margin Color:</label>
+            <select id="marginColor" style="padding: 4px;">
+                <option value="rgba(160, 160, 160, 0.3)" style="color: rgb(160, 160, 160);">Light Gray</option>
+                <option value="rgba(100, 100, 100, 0.3)" style="color: rgb(100, 100, 100);">Medium Gray</option>
+                <option value="rgba(60, 60, 60, 0.3)" style="color: rgb(60, 60, 60);">Dark Gray</option>
+                <option value="rgba(255, 200, 200, 0.3)" style="color: rgb(255, 150, 150);">Light Red</option>
+                <option value="rgba(255, 100, 100, 0.3)" style="color: rgb(255, 100, 100);">Medium Red</option>
+                <option value="rgba(200, 50, 50, 0.3)" style="color: rgb(200, 50, 50);">Dark Red</option>
+                <option value="rgba(255, 182, 193, 0.3)" style="color: rgb(255, 140, 160);">Light Pink</option>
+                <option value="rgba(255, 105, 180, 0.3)" style="color: rgb(255, 105, 180);">Medium Pink</option>
+                <option value="rgba(219, 112, 147, 0.3)" style="color: rgb(219, 112, 147);">Dark Pink</option>
+                <option value="rgba(173, 216, 230, 0.3)" style="color: rgb(100, 180, 220);">Light Blue</option>
+                <option value="rgba(100, 149, 237, 0.3)" style="color: rgb(100, 149, 237);">Medium Blue</option>
+                <option value="rgba(65, 105, 225, 0.3)" style="color: rgb(65, 105, 225);">Dark Blue</option>
+                <option value="rgba(255, 255, 200, 0.3)" style="color: rgb(200, 200, 100);">Light Yellow</option>
+                <option value="rgba(255, 255, 100, 0.3)" style="color: rgb(200, 200, 50);">Medium Yellow</option>
+                <option value="rgba(218, 165, 32, 0.3)" style="color: rgb(218, 165, 32);">Dark Yellow</option>
+                <option value="rgba(144, 238, 144, 0.3)" style="color: rgb(100, 200, 100);">Light Green</option>
+                <option value="rgba(60, 179, 113, 0.3)" style="color: rgb(60, 179, 113);">Medium Green</option>
+                <option value="rgba(34, 139, 34, 0.3)" style="color: rgb(34, 139, 34);">Dark Green</option>
+                <option value="rgba(221, 160, 221, 0.3)" style="color: rgb(200, 130, 200);">Light Purple</option>
+                <option value="rgba(147, 112, 219, 0.3)" style="color: rgb(147, 112, 219);">Medium Purple</option>
+                <option value="rgba(75, 0, 130, 0.3)" style="color: rgb(75, 0, 130);">Dark Purple</option>
+                <option value="rgba(255, 218, 185, 0.3)" style="color: rgb(255, 180, 130);">Light Orange</option>
+                <option value="rgba(255, 140, 0, 0.3)" style="color: rgb(255, 140, 0);">Medium Orange</option>
+                <option value="rgba(255, 69, 0, 0.3)" style="color: rgb(255, 69, 0);">Dark Orange</option>
+            </select>
+
             <button onclick="resetMargins()" style="margin-left: 10px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #ff69b4; color: white; cursor: pointer;">Reset Margins</button>
 
             <span id="usableArea" style="margin-left: 20px; font-weight: bold; color: #007bff;"></span>
@@ -612,6 +640,7 @@
         const marginBottomSelect = document.getElementById('marginBottom');
         const marginLeftSelect = document.getElementById('marginLeft');
         const marginRightSelect = document.getElementById('marginRight');
+        const marginColorSelect = document.getElementById('marginColor');
         const gridSizeSelect = document.getElementById('gridSize');
         const overlayGridSelect = document.getElementById('overlayGrid');
         const showRulersCheckbox = document.getElementById('showRulers');
@@ -1046,6 +1075,13 @@
                 pageSizeSelect.selectedIndex = 0;
             }
 
+            // Set default margin color based on device type
+            if (deviceTypeSelect.value === 'rm2') {
+                marginColorSelect.value = 'rgba(60, 60, 60, 0.3)'; // Dark Gray for reMarkable 1/2
+            } else {
+                marginColorSelect.value = 'rgba(255, 182, 193, 0.3)'; // Light Pink for other devices
+            }
+
             applyDefaultMargins();
             updateTemplate();
         }
@@ -1162,7 +1198,7 @@ ${gridSvgContent}
             const marginRight = parseFloat(marginRightSelect.value);
 
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
-                const marginColor = deviceTypeSelect.value === 'rm2' ? 'rgba(160, 160, 160, 0.3)' : 'rgba(255, 182, 193, 0.3)';
+                const marginColor = marginColorSelect.value;
 
                 svgContent += `    <!-- Margin areas -->
 `;
@@ -1256,7 +1292,7 @@ ${gridSvgContent}
                 if (marginTop >= 20) {
                     const x = contentX + contentWidth / 2;
                     const y = contentY + marginTop / 2;
-                    svgContent += `    <text x="${x}" y="${y}" font-family="Arial" font-size="10" font-weight="bold" fill="#666" text-anchor="middle" dominant-baseline="middle">${usableWidthIn.toFixed(2)}"</text>
+                    svgContent += `    <text x="${x}" y="${y}" font-family="Arial" font-size="10" font-weight="bold" fill="#aaa" text-anchor="middle" dominant-baseline="middle">${usableWidthIn.toFixed(2)}"</text>
 `;
                 }
 
@@ -1264,9 +1300,16 @@ ${gridSvgContent}
                 if (marginRight >= 20) {
                     const x = contentX + contentWidth - marginRight / 2;
                     const y = contentY + contentHeight / 2;
-                    svgContent += `    <text x="${x}" y="${y}" font-family="Arial" font-size="10" font-weight="bold" fill="#666" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${x} ${y})">${usableHeightIn.toFixed(2)}"</text>
+                    svgContent += `    <text x="${x}" y="${y}" font-family="Arial" font-size="10" font-weight="bold" fill="#aaa" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${x} ${y})">${usableHeightIn.toFixed(2)}"</text>
 `;
                 }
+            }
+
+            // Add URL text if there's enough top margin
+            if (marginTop >= 15) {
+                svgContent += `    <!-- URL text -->
+    <text x="${contentX + contentWidth / 2}" y="${contentY + 5}" font-family="Arial" font-size="10" fill="#999" text-anchor="middle" dominant-baseline="hanging">https://srives.github.io/reMarkable/</text>
+`;
             }
 
             svgContent += `</svg>`;
@@ -1351,7 +1394,7 @@ ${gridSvgContent}
                 const marginRight = parseFloat(marginRightSelect.value);
 
                 if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
-                    ctx.fillStyle = deviceTypeSelect.value === 'rm2' ? 'rgba(160, 160, 160, 0.3)' : 'rgba(255, 182, 193, 0.3)';
+                    ctx.fillStyle = marginColorSelect.value;
 
                     if (marginTop > 0) {
                         ctx.fillRect(contentX, contentY, contentWidth, marginTop);
@@ -1436,7 +1479,7 @@ ${gridSvgContent}
                     const usableHeightIn = pageHeightInInches - marginTopIn - marginBottomIn;
 
                     ctx.font = 'bold 10px Arial';
-                    ctx.fillStyle = '#666';
+                    ctx.fillStyle = '#aaa';
 
                     // Top margin label - show usable width
                     if (marginTop >= 20) {
@@ -1459,6 +1502,15 @@ ${gridSvgContent}
                         ctx.fillText(usableHeightIn.toFixed(2) + '"', 0, 0);
                         ctx.restore();
                     }
+                }
+
+                // Add URL text if there's enough top margin
+                if (marginTop >= 15) {
+                    ctx.font = '10px Arial';
+                    ctx.fillStyle = '#999';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText('https://srives.github.io/reMarkable/', contentX + contentWidth / 2, contentY + 5);
                 }
 
                 // Convert canvas to PNG and download
@@ -1926,12 +1978,7 @@ ${gridSvgContent}
                 marginLines.style.borderLeftWidth = marginLeft + 'px';
                 marginLines.style.borderRightWidth = marginRight + 'px';
                 marginLines.style.borderStyle = 'solid';
-
-                if (deviceTypeSelect.value === 'rm2') {
-                    marginLines.style.borderColor = 'rgba(100, 100, 100, 0.4)';
-                } else {
-                    marginLines.style.borderColor = 'rgba(255, 100, 100, 0.3)';
-                }
+                marginLines.style.borderColor = marginColorSelect.value;
 
                 marginLines.style.display = 'block';
             } else {
@@ -2007,6 +2054,7 @@ ${gridSvgContent}
         marginBottomSelect.addEventListener('change', updateTemplate);
         marginLeftSelect.addEventListener('change', updateTemplate);
         marginRightSelect.addEventListener('change', updateTemplate);
+        marginColorSelect.addEventListener('change', updateTemplate);
         gridSizeSelect.addEventListener('change', updateTemplate);
         overlayGridSelect.addEventListener('change', updateTemplate);
         showRulersCheckbox.addEventListener('change', updateRulers);
