@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>reMarkable Pro Template</title>
+    <title>Rives' reMarkable Templates for Book Publishing</title>
     <style>
         body {
             margin: 0;
@@ -298,8 +298,8 @@
 </head>
 <body>
     <div class="controls">
-        <h2 style="margin: 0 0 5px 0; color: #333; text-align: center; font-style: italic; font-weight: normal;">Rives' reMarkable Book Publishing Template</h2>
-        <p style="margin: 0 0 15px 0; color: #666; text-align: center; font-size: 14px;">Suitable for writing on the reMarkable</p>
+        <h2 style="margin: 0 0 5px 0; color: #333; text-align: center; font-style: italic; font-weight: normal;">Rives' reMarkable Templates for Book Publishing</h2>
+        <p style="margin: 0 0 15px 0; color: #666; text-align: center; font-size: 14px;">Useful for minding your margins on any reMarkable</p>
         
         <div style="margin-bottom: 10px;">
             <label for="deviceType">Device:</label>
@@ -569,7 +569,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.1</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.4</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
@@ -1185,6 +1185,42 @@ ${gridSvgContent}
                 }
             }
 
+            // Add rulers if enabled
+            if (showRulersCheckbox.checked) {
+                svgContent += `    <!-- Rulers -->
+`;
+                // Get full device dimensions for rulers
+                let labelToUse = pageSizeSelect.options[0].text;
+                const dimensionMatch = labelToUse.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+                let widthInInches, heightInInches;
+                if (dimensionMatch) {
+                    widthInInches = parseFloat(dimensionMatch[1]);
+                    heightInInches = parseFloat(dimensionMatch[2]);
+                } else {
+                    widthInInches = pageWidth / device.dpi;
+                    heightInInches = pageHeight / device.dpi;
+                }
+
+                const pixelsPerInchWidth = pageWidth / widthInInches;
+                const pixelsPerInchHeight = pageHeight / heightInInches;
+
+                // Left ruler (vertical)
+                for (let i = 0.25; i <= heightInInches; i += 0.25) {
+                    const y = i * pixelsPerInchHeight;
+                    const text = i.toFixed(2).replace(/\.?0+$/, '') + '"';
+                    svgContent += `    <text x="4" y="${y}" font-family="Arial" font-size="7" fill="#666">${text}</text>
+`;
+                }
+
+                // Bottom ruler (horizontal)
+                for (let i = 0.25; i <= widthInInches; i += 0.25) {
+                    const x = i * pixelsPerInchWidth;
+                    const text = i.toFixed(2).replace(/\.?0+$/, '') + '"';
+                    svgContent += `    <text x="${x}" y="${pageHeight - 4}" font-family="Arial" font-size="7" fill="#666" text-anchor="middle">${text}</text>
+`;
+                }
+            }
+
             svgContent += `</svg>`;
 
             // Download SVG
@@ -1280,6 +1316,45 @@ ${gridSvgContent}
                     }
                     if (marginRight > 0) {
                         ctx.fillRect(contentX + contentWidth - marginRight, contentY, marginRight, contentHeight);
+                    }
+                }
+
+                // Add rulers if enabled
+                if (showRulersCheckbox.checked) {
+                    // Get full device dimensions for rulers
+                    let labelToUse = pageSizeSelect.options[0].text;
+                    const dimensionMatch = labelToUse.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+                    let widthInInches, heightInInches;
+                    if (dimensionMatch) {
+                        widthInInches = parseFloat(dimensionMatch[1]);
+                        heightInInches = parseFloat(dimensionMatch[2]);
+                    } else {
+                        widthInInches = pageWidth / device.dpi;
+                        heightInInches = pageHeight / device.dpi;
+                    }
+
+                    const pixelsPerInchWidth = pageWidth / widthInInches;
+                    const pixelsPerInchHeight = pageHeight / heightInInches;
+
+                    ctx.font = '7px Arial';
+                    ctx.fillStyle = '#666';
+
+                    // Left ruler (vertical)
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    for (let i = 0.25; i <= heightInInches; i += 0.25) {
+                        const y = i * pixelsPerInchHeight;
+                        const text = i.toFixed(2).replace(/\.?0+$/, '') + '"';
+                        ctx.fillText(text, 4, y);
+                    }
+
+                    // Bottom ruler (horizontal)
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'alphabetic';
+                    for (let i = 0.25; i <= widthInInches; i += 0.25) {
+                        const x = i * pixelsPerInchWidth;
+                        const text = i.toFixed(2).replace(/\.?0+$/, '') + '"';
+                        ctx.fillText(text, x, pageHeight - 4);
                     }
                 }
 
