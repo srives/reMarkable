@@ -569,7 +569,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.4</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.5</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
@@ -1221,6 +1221,54 @@ ${gridSvgContent}
                 }
             }
 
+            // Add margin dimensions if enabled
+            if (showMarginDimensionsCheckbox.checked) {
+                // Calculate usable dimensions
+                const selectedLabel = pageSizeSelect.options[pageSizeSelect.selectedIndex].text;
+                const dimensionMatch = selectedLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+                let pageWidthInInches, pageHeightInInches;
+                if (dimensionMatch) {
+                    pageWidthInInches = parseFloat(dimensionMatch[1]);
+                    pageHeightInInches = parseFloat(dimensionMatch[2]);
+                } else {
+                    const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                    const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                    pageWidthInInches = actualPageWidth / device.dpi;
+                    pageHeightInInches = actualPageHeight / device.dpi;
+                }
+
+                const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                const pixelsPerInchWidth = actualPageWidth / pageWidthInInches;
+                const pixelsPerInchHeight = actualPageHeight / pageHeightInInches;
+
+                const marginTopIn = marginTop / pixelsPerInchHeight;
+                const marginBottomIn = marginBottom / pixelsPerInchHeight;
+                const marginLeftIn = marginLeft / pixelsPerInchWidth;
+                const marginRightIn = marginRight / pixelsPerInchWidth;
+
+                const usableWidthIn = pageWidthInInches - marginLeftIn - marginRightIn;
+                const usableHeightIn = pageHeightInInches - marginTopIn - marginBottomIn;
+
+                svgContent += `    <!-- Margin dimensions -->
+`;
+                // Top margin label - show usable width
+                if (marginTop >= 20) {
+                    const x = contentX + contentWidth / 2;
+                    const y = contentY + marginTop / 2;
+                    svgContent += `    <text x="${x}" y="${y}" font-family="Arial" font-size="10" font-weight="bold" fill="#666" text-anchor="middle" dominant-baseline="middle">${usableWidthIn.toFixed(2)}"</text>
+`;
+                }
+
+                // Right margin label - show usable height (rotated)
+                if (marginRight >= 20) {
+                    const x = contentX + contentWidth - marginRight / 2;
+                    const y = contentY + contentHeight / 2;
+                    svgContent += `    <text x="${x}" y="${y}" font-family="Arial" font-size="10" font-weight="bold" fill="#666" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${x} ${y})">${usableHeightIn.toFixed(2)}"</text>
+`;
+                }
+            }
+
             svgContent += `</svg>`;
 
             // Download SVG
@@ -1355,6 +1403,61 @@ ${gridSvgContent}
                         const x = i * pixelsPerInchWidth;
                         const text = i.toFixed(2).replace(/\.?0+$/, '') + '"';
                         ctx.fillText(text, x, pageHeight - 4);
+                    }
+                }
+
+                // Add margin dimensions if enabled
+                if (showMarginDimensionsCheckbox.checked) {
+                    // Calculate usable dimensions
+                    const selectedLabel = pageSizeSelect.options[pageSizeSelect.selectedIndex].text;
+                    const dimensionMatch = selectedLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+                    let pageWidthInInches, pageHeightInInches;
+                    if (dimensionMatch) {
+                        pageWidthInInches = parseFloat(dimensionMatch[1]);
+                        pageHeightInInches = parseFloat(dimensionMatch[2]);
+                    } else {
+                        const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                        const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                        pageWidthInInches = actualPageWidth / device.dpi;
+                        pageHeightInInches = actualPageHeight / device.dpi;
+                    }
+
+                    const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                    const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                    const pixelsPerInchWidth = actualPageWidth / pageWidthInInches;
+                    const pixelsPerInchHeight = actualPageHeight / pageHeightInInches;
+
+                    const marginTopIn = marginTop / pixelsPerInchHeight;
+                    const marginBottomIn = marginBottom / pixelsPerInchHeight;
+                    const marginLeftIn = marginLeft / pixelsPerInchWidth;
+                    const marginRightIn = marginRight / pixelsPerInchWidth;
+
+                    const usableWidthIn = pageWidthInInches - marginLeftIn - marginRightIn;
+                    const usableHeightIn = pageHeightInInches - marginTopIn - marginBottomIn;
+
+                    ctx.font = 'bold 10px Arial';
+                    ctx.fillStyle = '#666';
+
+                    // Top margin label - show usable width
+                    if (marginTop >= 20) {
+                        const x = contentX + contentWidth / 2;
+                        const y = contentY + marginTop / 2;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(usableWidthIn.toFixed(2) + '"', x, y);
+                    }
+
+                    // Right margin label - show usable height (rotated)
+                    if (marginRight >= 20) {
+                        const x = contentX + contentWidth - marginRight / 2;
+                        const y = contentY + contentHeight / 2;
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(usableHeightIn.toFixed(2) + '"', 0, 0);
+                        ctx.restore();
                     }
                 }
 
