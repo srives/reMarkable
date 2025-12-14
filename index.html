@@ -490,7 +490,9 @@
                 <option value="327.7">1.45"</option>
                 <option value="339">1.50"</option>
             </select>
-            
+
+            <button onclick="resetMargins()" style="margin-left: 10px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #dc3545; color: white; cursor: pointer;">Reset Margins</button>
+
             <span id="usableArea" style="margin-left: 20px; font-weight: bold; color: #007bff;"></span>
         </div>
         
@@ -563,7 +565,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.3</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.8</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
@@ -638,8 +640,10 @@
                 unscaledHeight: 8.25,
                 sizes: [
                     { value: '1404,1872', label: 'Full reMarkable 1/2 (6.21" × 8.28")' },
-                    { value: '961,1553', label: 'Mass Market Portrait (4.25" × 6.87")' },
+                    { value: '961,1553', label: 'Pocket Book (Mass Market) (4.25" × 6.87")' },
+                    { value: '961,1582', label: '1970s Pocket Book (4.25" × 7")' },
                     { value: '1130,1808', label: 'Fiction Portrait (5" × 8")' },
+                    { value: '1130,1582', label: 'YA Fiction (5" × 7")' },
                     { value: '1186,1808', label: 'Fiction Portrait (5.25" × 8")' },
                     { value: '1317,1869', label: 'A5 Portrait (5.83" × 8.27")' },
                     { value: '933,1317', label: 'A6 Portrait (4.13" × 5.83")' },
@@ -659,8 +663,10 @@
                 unscaledHeight: 10.8,
                 sizes: [
                     { value: '1620,2160', label: 'Full reMarkable Pro (7.07" × 9.43")' },
-                    { value: '973,1573', label: 'Mass Market Portrait (4.25" × 6.87")' },
+                    { value: '973,1573', label: 'Pocket Book (Mass Market) (4.25" × 6.87")' },
+                    { value: '973,1603', label: '1970s Pocket Book (4.25" × 7")' },
                     { value: '1145,1832', label: 'Fiction Portrait (5" × 8")' },
+                    { value: '1145,1603', label: 'YA Fiction (5" × 7")' },
                     { value: '1202,1832', label: 'Fiction Portrait (5.25" × 8")' },
                     { value: '1260,1947', label: 'Digest Portrait (5.5" × 8.5")' },
                     { value: '1374,2061', label: 'US Trade Portrait (6" × 9")' },
@@ -695,9 +701,13 @@
             '1620,2160': { top: 0.6, bottom: 0.65, left: 0.65, right: 0.6 },
             '961,1553': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
             '973,1573': { top: 0.4, bottom: 0.45, left: 0.4, right: 0.4 },
+            '961,1582': { top: 0.4, bottom: 0.5, left: 0.4, right: 0.4 },
+            '973,1603': { top: 0.4, bottom: 0.5, left: 0.4, right: 0.4 },
             '1122,1814': { top: 0.35, bottom: 0.4, left: 0.35, right: 0.35 },
             '1130,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1130,1582': { top: 0.5, bottom: 0.6, left: 0.5, right: 0.5 },
             '1145,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
+            '1145,1603': { top: 0.5, bottom: 0.6, left: 0.5, right: 0.5 },
             '1186,1808': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1202,1832': { top: 0.45, bottom: 0.5, left: 0.45, right: 0.4 },
             '1260,1947': { top: 0.5, bottom: 0.55, left: 0.5, right: 0.45 },
@@ -747,35 +757,83 @@
             platform: {
                 general: {
                     name: "General Publishing",
-                    desc: "Standard industry practice: Inner 0.625\"-0.75\", Top 0.5\"-0.625\", Bottom 0.625\"-0.75\", Outer 0.5\"-0.625\". Bottom margin typically largest."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Standard industry practice with bottom margin typically largest for page numbers.`;
+                        }
+                        return "Standard industry practice: Inner 0.625\"-0.75\", Top 0.5\"-0.625\", Bottom 0.625\"-0.75\", Outer 0.5\"-0.625\". Bottom margin typically largest.";
+                    }
                 },
                 kdp: {
                     name: "Amazon KDP",
-                    desc: "Minimum 0.25\" all sides, but 0.375\"-0.5\" recommended. For books under 150 pages: 0.375\" minimum. 150-400 pages: 0.5\" minimum. Over 400 pages: 0.625\" minimum inner margin."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". KDP requires minimum 0.375\" all sides (safe zone). Gutter margin increases with page count: 0.5\" for thin books, 0.75\"-1\" for 200+ pages.`;
+                        }
+                        return "Minimum 0.375\" safe zone all sides. Recommended: 0.5\" outside margins, gutter 0.8\"-1\" for 150-400 pages.";
+                    }
                 },
                 ingram: {
                     name: "IngramSpark",
-                    desc: "Minimum 0.5\" inside margin required. Recommends: Inside 0.625\"-0.75\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Add 0.125\" per 100 pages for spine thickness."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". IngramSpark requires minimum 0.5\" all sides, with text at least 0.25\" from trim line. Add 0.125\" to gutter for every 100 pages.`;
+                        }
+                        return "Minimum 0.5\" all sides required. Text must be 0.25\" from trim. Inside 0.625\"-0.75\", Outside 0.5\", Top 0.5\", Bottom 0.625\".";
+                    }
                 },
                 lulu: {
                     name: "Lulu",
-                    desc: "Minimum 0.25\" all sides. Recommended: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". For perfect binding, suggest 0.75\" inside margin."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Lulu requires 0.5\" safety margin all sides, with gutter of 0.2\"-0.3\" for binding.`;
+                        }
+                        return "Minimum 0.5\" safety margin all sides. Gutter: 0.2\"-0.3\". Inside 0.625\"-0.75\", Outside 0.5\", Top 0.5\", Bottom 0.625\".";
+                    }
                 },
                 bn: {
                     name: "Barnes & Noble Press",
-                    desc: "Minimum 0.375\" all sides. Recommended: Inside 0.5\"-0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Add more for larger page counts."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". B&N Press standard is 0.5\" three sides, 0.75\" inside margin.`;
+                        }
+                        return "Standard: 0.5\" three sides, 0.75\" inside margin. Adjust gutter for thicker books.";
+                    }
                 },
                 d2d: {
                     name: "Draft2Digital",
-                    desc: "Works with multiple print partners. Safe margins: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Follows KDP guidelines generally."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Draft2Digital uses automated layout but these margins work well with their system.`;
+                        }
+                        return "Works with multiple print partners. Safe margins: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Follows KDP guidelines generally.";
+                    }
                 },
                 blurb: {
                     name: "Blurb",
-                    desc: "Varies by book type. Standard: 0.5\" minimum all sides. Trade books: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Photo books can be smaller."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Blurb requires critical content 0.25\" from trim, with 0.5\" recommended for safety.`;
+                        }
+                        return "Critical content must be 0.25\" from trim. Standard: 0.5\" minimum all sides. Trade books: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\".";
+                    }
                 },
                 bookbaby: {
                     name: "BookBaby",
-                    desc: "Minimum 0.5\" all sides recommended. Professional standard: Inside 0.75\", Outside 0.5\", Top 0.625\", Bottom 0.75\". More generous for premium appearance."
+                    getDesc: function(pageSize) {
+                        const margins = defaultMarginsInches[pageSize];
+                        if (margins) {
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". BookBaby recommends generous margins (0.875\" left/right minimum) for professional appearance.`;
+                        }
+                        return "Minimum 0.5\" all sides recommended. Professional standard: Inside 0.75\"-0.875\", Outside 0.5\", Top 0.625\", Bottom 0.75\".";
+                    }
                 }
             }
         };
@@ -783,10 +841,15 @@
         function updateRecommendation() {
             const binding = marginRecommendations.binding[bindingTypeSelect.value];
             const platform = marginRecommendations.platform[platformSelect.value];
-            
+            const currentPageSize = pageSizeSelect.value;
+
+            const platformDesc = typeof platform.getDesc === 'function'
+                ? platform.getDesc(currentPageSize)
+                : platform.desc;
+
             recommendationText.innerHTML = `
                 <div style="margin-bottom: 8px;"><strong>${binding.name}:</strong> ${binding.desc}</div>
-                <div><strong>${platform.name}:</strong> ${platform.desc}</div>
+                <div><strong>${platform.name}:</strong> ${platformDesc}</div>
             `;
             marginRecommendation.style.display = 'block';
         }
@@ -797,7 +860,17 @@
         }
         
         window.applyRecommendedMargins = applyRecommendedMargins;
-        
+
+        function resetMargins() {
+            marginTopSelect.value = 0;
+            marginBottomSelect.value = 0;
+            marginLeftSelect.value = 0;
+            marginRightSelect.value = 0;
+            updateTemplate();
+        }
+
+        window.resetMargins = resetMargins;
+
         function applyDefaultMargins() {
             const device = devices[deviceTypeSelect.value];
             const pageSize = pageSizeSelect.value;
@@ -991,7 +1064,7 @@
                     line.setAttribute('x2', x);
                     line.setAttribute('y2', pageHeight);
                     line.setAttribute('stroke', '#f5f5f5');
-                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('stroke-width', '1');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
@@ -1003,7 +1076,7 @@
                     line.setAttribute('x2', pageWidth);
                     line.setAttribute('y2', y);
                     line.setAttribute('stroke', '#e8e8e8');
-                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('stroke-width', '1');
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
@@ -1016,7 +1089,7 @@
                         line.setAttribute('x2', x);
                         line.setAttribute('y2', pageHeight);
                         line.setAttribute('stroke', '#e8e8e8');
-                        line.setAttribute('stroke-width', '3');
+                        line.setAttribute('stroke-width', '2');
                         line.setAttribute('shape-rendering', 'crispEdges');
                         gridSvg.appendChild(line);
                     }
@@ -1028,7 +1101,7 @@
                         line.setAttribute('x2', pageWidth);
                         line.setAttribute('y2', y);
                         line.setAttribute('stroke', '#d0d0d0');
-                        line.setAttribute('stroke-width', '3');
+                        line.setAttribute('stroke-width', '2');
                         line.setAttribute('shape-rendering', 'crispEdges');
                         gridSvg.appendChild(line);
                     }
@@ -1479,6 +1552,7 @@
         pageSizeSelect.addEventListener('change', () => {
             applyDefaultMargins();
             updateTemplate();
+            updateRecommendation();
         });
         bindingTypeSelect.addEventListener('change', updateRecommendation);
         platformSelect.addEventListener('change', updateRecommendation);
