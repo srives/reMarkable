@@ -569,7 +569,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.16</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.1</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
@@ -1155,30 +1155,32 @@ ${gridSvgContent}
 `;
             }
 
-            // Add margin borders if present
+            // Add filled margin areas if present
             const marginTop = parseFloat(marginTopSelect.value);
             const marginBottom = parseFloat(marginBottomSelect.value);
             const marginLeft = parseFloat(marginLeftSelect.value);
             const marginRight = parseFloat(marginRightSelect.value);
 
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
-                const borderColor = deviceTypeSelect.value === 'rm2' ? 'rgba(100, 100, 100, 0.4)' : 'rgba(255, 100, 100, 0.3)';
+                const marginColor = deviceTypeSelect.value === 'rm2' ? 'rgba(160, 160, 160, 0.3)' : 'rgba(255, 182, 193, 0.3)';
 
-                // Draw margin borders
+                svgContent += `    <!-- Margin areas -->
+`;
+                // Draw filled margin rectangles
                 if (marginTop > 0) {
-                    svgContent += `    <line x1="${contentX}" y1="${contentY + marginTop}" x2="${contentX + contentWidth}" y2="${contentY + marginTop}" stroke="${borderColor}" stroke-width="1"/>
+                    svgContent += `    <rect x="${contentX}" y="${contentY}" width="${contentWidth}" height="${marginTop}" fill="${marginColor}"/>
 `;
                 }
                 if (marginBottom > 0) {
-                    svgContent += `    <line x1="${contentX}" y1="${contentY + contentHeight - marginBottom}" x2="${contentX + contentWidth}" y2="${contentY + contentHeight - marginBottom}" stroke="${borderColor}" stroke-width="1"/>
+                    svgContent += `    <rect x="${contentX}" y="${contentY + contentHeight - marginBottom}" width="${contentWidth}" height="${marginBottom}" fill="${marginColor}"/>
 `;
                 }
                 if (marginLeft > 0) {
-                    svgContent += `    <line x1="${contentX + marginLeft}" y1="${contentY}" x2="${contentX + marginLeft}" y2="${contentY + contentHeight}" stroke="${borderColor}" stroke-width="1"/>
+                    svgContent += `    <rect x="${contentX}" y="${contentY}" width="${marginLeft}" height="${contentHeight}" fill="${marginColor}"/>
 `;
                 }
                 if (marginRight > 0) {
-                    svgContent += `    <line x1="${contentX + contentWidth - marginRight}" y1="${contentY}" x2="${contentX + contentWidth - marginRight}" y2="${contentY + contentHeight}" stroke="${borderColor}" stroke-width="1"/>
+                    svgContent += `    <rect x="${contentX + contentWidth - marginRight}" y="${contentY}" width="${marginRight}" height="${contentHeight}" fill="${marginColor}"/>
 `;
                 }
             }
@@ -1258,39 +1260,26 @@ ${gridSvgContent}
                 // Draw grid
                 ctx.drawImage(img, contentX, contentY, contentWidth, contentHeight);
 
-                // Draw margin borders if present
+                // Draw filled margin areas if present
                 const marginTop = parseFloat(marginTopSelect.value);
                 const marginBottom = parseFloat(marginBottomSelect.value);
                 const marginLeft = parseFloat(marginLeftSelect.value);
                 const marginRight = parseFloat(marginRightSelect.value);
 
                 if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
-                    ctx.strokeStyle = deviceTypeSelect.value === 'rm2' ? 'rgba(100, 100, 100, 0.4)' : 'rgba(255, 100, 100, 0.3)';
-                    ctx.lineWidth = 1;
+                    ctx.fillStyle = deviceTypeSelect.value === 'rm2' ? 'rgba(160, 160, 160, 0.3)' : 'rgba(255, 182, 193, 0.3)';
 
                     if (marginTop > 0) {
-                        ctx.beginPath();
-                        ctx.moveTo(contentX, contentY + marginTop);
-                        ctx.lineTo(contentX + contentWidth, contentY + marginTop);
-                        ctx.stroke();
+                        ctx.fillRect(contentX, contentY, contentWidth, marginTop);
                     }
                     if (marginBottom > 0) {
-                        ctx.beginPath();
-                        ctx.moveTo(contentX, contentY + contentHeight - marginBottom);
-                        ctx.lineTo(contentX + contentWidth, contentY + contentHeight - marginBottom);
-                        ctx.stroke();
+                        ctx.fillRect(contentX, contentY + contentHeight - marginBottom, contentWidth, marginBottom);
                     }
                     if (marginLeft > 0) {
-                        ctx.beginPath();
-                        ctx.moveTo(contentX + marginLeft, contentY);
-                        ctx.lineTo(contentX + marginLeft, contentY + contentHeight);
-                        ctx.stroke();
+                        ctx.fillRect(contentX, contentY, marginLeft, contentHeight);
                     }
                     if (marginRight > 0) {
-                        ctx.beginPath();
-                        ctx.moveTo(contentX + contentWidth - marginRight, contentY);
-                        ctx.lineTo(contentX + contentWidth - marginRight, contentY + contentHeight);
-                        ctx.stroke();
+                        ctx.fillRect(contentX + contentWidth - marginRight, contentY, marginRight, contentHeight);
                     }
                 }
 
