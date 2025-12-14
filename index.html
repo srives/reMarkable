@@ -308,7 +308,13 @@
                 <option value="rmpro" selected>reMarkable Pro</option>
                 <option value="paperpromove">Paper Pro Move</option>
             </select>
-            
+
+            <label for="scaleType" style="margin-left: 20px;">Scale:</label>
+            <select id="scaleType">
+                <option value="yes" selected>Yes</option>
+                <option value="no">No</option>
+            </select>
+
             <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
             <select id="pageSize">
                 <option value="1620,2160">Full reMarkable Pro (7.07" × 9.43")</option>
@@ -498,7 +504,7 @@
                 <option value="cornell">Cornell Notes</option>
                 <option value="music">Music Staff</option>
             </select>
-            
+
             <label for="gridSize" id="gridSizeLabel" style="margin-left: 20px;">Line/Grid Size:</label>
             <select id="gridSize">
                 <option value="11.3">0.05" (11px)</option>
@@ -547,16 +553,21 @@
             
             <label for="showMarginDimensions" style="margin-left: 20px;">Show Wd × Ht:</label>
             <input type="checkbox" id="showMarginDimensions">
-            
+
             <button onclick="printTemplate()">Print/Save as PDF</button>
+        </div>
+
+        <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-left: 4px solid #6c757d; border-radius: 4px; font-size: 12px; font-family: monospace;">
+            <strong>Debug:</strong> <span id="debugInfo" style="color: #495057;"></span>
         </div>
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.105</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.1</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
-            <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied.</li>
+            <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
+            <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied when Scale is "Yes".</li>
             <li><strong>Binding Type & Platform:</strong> View margin recommendations for different binding types and publishing platforms. Click "Apply Recommended Margins" to use suggested defaults.</li>
             <li><strong>Margins:</strong> Adjust individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with borders (gray for reMarkable 1/2, red for color devices). The usable area (width × height inside margins) is displayed next to the Right margin control.</li>
             <li><strong>Template Type:</strong> Select your preferred template style (lined, grid, dot grid, etc.).</li>
@@ -586,6 +597,7 @@
     
     <script>
         const deviceTypeSelect = document.getElementById('deviceType');
+        const scaleTypeSelect = document.getElementById('scaleType');
         const templateTypeSelect = document.getElementById('templateType');
         const pageSizeSelect = document.getElementById('pageSize');
         const bindingTypeSelect = document.getElementById('bindingType');
@@ -613,6 +625,7 @@
         const usableArea = document.getElementById('usableArea');
         const marginLabelTop = document.getElementById('marginLabelTop');
         const marginLabelRight = document.getElementById('marginLabelRight');
+        const debugInfo = document.getElementById('debugInfo');
         
         const devices = {
             rm2: {
@@ -620,6 +633,9 @@
                 width: 1404,
                 height: 1872,
                 dpi: 226,
+                unscaledDpi: 226,
+                unscaledWidth: 6.25,
+                unscaledHeight: 8.25,
                 sizes: [
                     { value: '1404,1872', label: 'Full reMarkable 1/2 (6.21" × 8.28")' },
                     { value: '961,1553', label: 'Mass Market Portrait (4.25" × 6.87")' },
@@ -638,6 +654,9 @@
                 width: 1620,
                 height: 2160,
                 dpi: 229,
+                unscaledDpi: 200,
+                unscaledWidth: 7.8,
+                unscaledHeight: 10.8,
                 sizes: [
                     { value: '1620,2160', label: 'Full reMarkable Pro (7.07" × 9.43")' },
                     { value: '973,1573', label: 'Mass Market Portrait (4.25" × 6.87")' },
@@ -659,6 +678,9 @@
                 width: 954,
                 height: 1696,
                 dpi: 264,
+                unscaledDpi: 220,
+                unscaledWidth: 4.24,
+                unscaledHeight: 7.7,
                 sizes: [
                     { value: '953,1695', label: 'Full Paper Pro Move (3.61" × 6.42")' },
                     { value: '792,1122', label: 'Compact (3" × 4.25")' },
@@ -780,13 +802,17 @@
             const device = devices[deviceTypeSelect.value];
             const pageSize = pageSizeSelect.value;
             const marginsInches = defaultMarginsInches[pageSize];
-            
+            const isScaled = scaleTypeSelect.value === 'yes';
+
+            // Use appropriate DPI based on scaling mode (matches margin dropdown calculations)
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+
             if (marginsInches) {
-                const topPx = Math.round(marginsInches.top * device.dpi * 100) / 100;
-                const bottomPx = Math.round(marginsInches.bottom * device.dpi * 100) / 100;
-                const leftPx = Math.round(marginsInches.left * device.dpi * 100) / 100;
-                const rightPx = Math.round(marginsInches.right * device.dpi * 100) / 100;
-                
+                const topPx = Math.round(marginsInches.top * dpi * 100) / 100;
+                const bottomPx = Math.round(marginsInches.bottom * dpi * 100) / 100;
+                const leftPx = Math.round(marginsInches.left * dpi * 100) / 100;
+                const rightPx = Math.round(marginsInches.right * dpi * 100) / 100;
+
                 marginTopSelect.value = topPx;
                 marginBottomSelect.value = bottomPx;
                 marginLeftSelect.value = leftPx;
@@ -796,18 +822,19 @@
         
         function updateMarginDropdowns() {
             const device = devices[deviceTypeSelect.value];
-            const dpi = device.dpi;
-            
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+
             const currentTop = marginTopSelect.value;
             const currentBottom = marginBottomSelect.value;
             const currentLeft = marginLeftSelect.value;
             const currentRight = marginRightSelect.value;
-            
+
             const marginSelects = [marginTopSelect, marginBottomSelect, marginLeftSelect, marginRightSelect];
-            
+
             marginSelects.forEach(select => {
                 select.innerHTML = '';
-                
+
                 for (let inches = 0; inches <= 1.5; inches += 0.05) {
                     const pixels = Math.round(inches * dpi * 100) / 100;
                     const option = document.createElement('option');
@@ -816,7 +843,7 @@
                     select.appendChild(option);
                 }
             });
-            
+
             marginTopSelect.value = currentTop;
             marginBottomSelect.value = currentBottom;
             marginLeftSelect.value = currentLeft;
@@ -826,37 +853,45 @@
         function updatePageSizes() {
             const device = devices[deviceTypeSelect.value];
             const currentValue = pageSizeSelect.value;
-            
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+
             templatePage.style.width = device.width + 'px';
             templatePage.style.height = device.height + 'px';
-            
+
             updatePrintPageSize(device.width, device.height);
             updateMarginDropdowns();
-            
+
             pageSizeSelect.innerHTML = '';
-            device.sizes.forEach(size => {
+            device.sizes.forEach((size, index) => {
                 const [width, height] = size.value.split(',').map(Number);
                 const option = document.createElement('option');
                 option.value = size.value;
-                
+
                 let fits;
                 if (width > height) {
                     fits = (width <= device.height && height <= device.width);
                 } else {
                     fits = (width <= device.width && height <= device.height);
                 }
-                
+
                 if (!fits) {
                     option.textContent = size.label + ' (Too Large)';
                     option.disabled = true;
                     option.style.color = '#999';
                 } else {
-                    option.textContent = size.label;
+                    // Only update the first (Full) item when scaling is off
+                    if (!isScaled && index === 0) {
+                        const baseName = size.label.replace(/\([\d\.]+"\s*×\s*[\d\.]+"\)/, '').trim();
+                        option.textContent = `${baseName} (${device.unscaledWidth}" × ${device.unscaledHeight}")`;
+                    } else {
+                        option.textContent = size.label;
+                    }
                 }
-                
+
                 pageSizeSelect.appendChild(option);
             });
-            
+
             const sameIndex = device.sizes.findIndex(s => s.value === currentValue);
             if (sameIndex >= 0) {
                 const [width, height] = currentValue.split(',').map(Number);
@@ -874,7 +909,7 @@
             } else {
                 pageSizeSelect.selectedIndex = 0;
             }
-            
+
             applyDefaultMargins();
             updateTemplate();
         }
@@ -927,19 +962,29 @@
         
         window.printTemplate = printTemplate;
         
-        function generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType) {
+        function generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType, isScaled, pageWidthInInches, pageHeightInInches) {
             gridSvg.innerHTML = '';
             gridSvg.style.display = 'none';
-            
+
+            // When not scaled, recalculate grid size based on physical dimensions
+            let actualGridSize = gridSize;
+            if (!isScaled) {
+                // gridSize is in pixels based on scaled DPI, need to convert to physical inches then to unscaled pixels
+                const device = devices[deviceTypeSelect.value];
+                const gridSizeInInches = gridSize / device.dpi;
+                const pixelsPerInch = pageHeight / pageHeightInInches; // Use height for consistency
+                actualGridSize = gridSizeInInches * pixelsPerInch;
+            }
+
             if (templateType === 'grid') {
                 gridSvg.style.display = 'block';
                 gridSvg.setAttribute('width', pageWidth);
                 gridSvg.setAttribute('height', pageHeight);
                 gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
-                
-                const overlaySize = gridSize * overlayMultiplier;
-                
-                for (let x = gridSize; x < pageWidth; x += gridSize) {
+
+                const overlaySize = actualGridSize * overlayMultiplier;
+
+                for (let x = actualGridSize; x < pageWidth; x += actualGridSize) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', x);
                     line.setAttribute('y1', 0);
@@ -950,8 +995,8 @@
                     line.setAttribute('shape-rendering', 'crispEdges');
                     gridSvg.appendChild(line);
                 }
-                
-                for (let y = gridSize; y < pageHeight; y += gridSize) {
+
+                for (let y = actualGridSize; y < pageHeight; y += actualGridSize) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', 0);
                     line.setAttribute('y1', y);
@@ -993,8 +1038,8 @@
                 gridSvg.setAttribute('width', pageWidth);
                 gridSvg.setAttribute('height', pageHeight);
                 gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
-                
-                for (let y = gridSize; y < pageHeight; y += gridSize) {
+
+                for (let y = actualGridSize; y < pageHeight; y += actualGridSize) {
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', 0);
                     line.setAttribute('y1', y);
@@ -1010,11 +1055,11 @@
                 gridSvg.setAttribute('width', pageWidth);
                 gridSvg.setAttribute('height', pageHeight);
                 gridSvg.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
-                
-                const overlaySize = gridSize * overlayMultiplier;
-                
-                for (let x = gridSize; x < pageWidth; x += gridSize) {
-                    for (let y = gridSize; y < pageHeight; y += gridSize) {
+
+                const overlaySize = actualGridSize * overlayMultiplier;
+
+                for (let x = actualGridSize; x < pageWidth; x += actualGridSize) {
+                    for (let y = actualGridSize; y < pageHeight; y += actualGridSize) {
                         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                         circle.setAttribute('cx', x);
                         circle.setAttribute('cy', y);
@@ -1039,34 +1084,79 @@
             }
         }
         
-        function updateRulers() {
+        function updateRulers(offsetX = 0, offsetY = 0, selectedPageWidth = null, selectedPageHeight = null) {
             const device = devices[deviceTypeSelect.value];
-            const [pageWidth, pageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const isScaled = scaleTypeSelect.value === 'yes';
             const showRulers = showRulersCheckbox.checked;
-            
+
+            // If not provided, get selectedPageWidth/Height from the dropdown
+            if (selectedPageWidth === null || selectedPageHeight === null) {
+                [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+            }
+
+            // Calculate offset if not provided
+            if (isScaled && offsetX === 0 && offsetY === 0) {
+                offsetX = (device.width - selectedPageWidth) / 2;
+                offsetY = (device.height - selectedPageHeight) / 2;
+            }
+
+            // Canvas size is ALWAYS full device dimensions
+            let pageWidth = device.width;
+            let pageHeight = device.height;
+
             if (showRulers) {
                 rulerLeft.style.display = 'block';
                 rulerBottom.style.display = 'block';
-                
+
+                // Rulers are children of contentArea but need to span the FULL device canvas
+                // Position left ruler at absolute left edge (x=0) of device
+                rulerLeft.style.position = 'absolute';
+                rulerLeft.style.left = (-offsetX + 2) + 'px';  // Move to absolute left edge
+                rulerLeft.style.top = (-offsetY) + 'px';  // Move to top of device
+                rulerLeft.style.height = pageHeight + 'px';
+
+                rulerBottom.style.position = 'absolute';
+                rulerBottom.style.left = (-offsetX) + 'px';  // Align with left edge of device
+                rulerBottom.style.bottom = 'auto';
+                rulerBottom.style.top = (pageHeight - offsetY - 20) + 'px';  // Position at bottom of device
+                rulerBottom.style.width = pageWidth + 'px';
+
                 rulerLeft.innerHTML = '';
                 rulerBottom.innerHTML = '';
-                
-                const widthInInches = pageWidth / device.dpi;
-                const heightInInches = pageHeight / device.dpi;
-                
+
+                let widthInInches, heightInInches;
+
+                // Rulers always show FULL DEVICE dimensions (topmost menu option)
+                // This is the physical size of the device screen
+                let labelToUse = pageSizeSelect.options[0].text;
+
+                const dimensionMatch = labelToUse.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+                if (dimensionMatch) {
+                    widthInInches = parseFloat(dimensionMatch[1]);
+                    heightInInches = parseFloat(dimensionMatch[2]);
+                } else {
+                    // Fallback to device calculation
+                    widthInInches = pageWidth / device.dpi;
+                    heightInInches = pageHeight / device.dpi;
+                }
+
+                // Calculate pixel positions based on FULL DEVICE dimensions
+                const pixelsPerInchWidth = pageWidth / widthInInches;
+                const pixelsPerInchHeight = pageHeight / heightInInches;
+
                 for (let i = 0.25; i <= heightInInches; i += 0.25) {
                     const mark = document.createElement('div');
                     mark.className = 'ruler-mark';
                     mark.textContent = i.toFixed(2).replace(/\.?0+$/, '') + '"';
-                    mark.style.top = (i * device.dpi) + 'px';
+                    mark.style.top = (i * pixelsPerInchHeight) + 'px';
                     rulerLeft.appendChild(mark);
                 }
-                
+
                 for (let i = 0.25; i <= widthInInches; i += 0.25) {
                     const mark = document.createElement('div');
                     mark.className = 'ruler-mark';
                     mark.textContent = i.toFixed(2).replace(/\.?0+$/, '') + '"';
-                    mark.style.left = (i * device.dpi) + 'px';
+                    mark.style.left = (i * pixelsPerInchWidth) + 'px';
                     rulerBottom.appendChild(mark);
                 }
             } else {
@@ -1077,27 +1167,149 @@
         
         function updateUsableArea() {
             const device = devices[deviceTypeSelect.value];
-            const [pageWidth, pageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const isScaled = scaleTypeSelect.value === 'yes';
+
+            // Canvas size is ALWAYS full device dimensions
+            const pageWidth = device.width;
+            const pageHeight = device.height;
+
             const marginTop = parseFloat(marginTopSelect.value);
             const marginBottom = parseFloat(marginBottomSelect.value);
             const marginLeft = parseFloat(marginLeftSelect.value);
             const marginRight = parseFloat(marginRightSelect.value);
-            
-            // Calculate usable area in pixels
-            const usableWidthPx = pageWidth - marginLeft - marginRight;
-            const usableHeightPx = pageHeight - marginTop - marginBottom;
-            
-            // Convert to inches
-            const usableWidthIn = usableWidthPx / device.dpi;
-            const usableHeightIn = usableHeightPx / device.dpi;
-            
+
+            let pageWidthInInches, pageHeightInInches;
+
+            // ALWAYS use the SELECTED page size for physical dimensions
+            const selectedLabel = pageSizeSelect.options[pageSizeSelect.selectedIndex].text;
+            const dimensionMatch = selectedLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+            if (dimensionMatch) {
+                pageWidthInInches = parseFloat(dimensionMatch[1]);
+                pageHeightInInches = parseFloat(dimensionMatch[2]);
+            } else {
+                // Fallback to device calculation
+                let [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+                const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                pageWidthInInches = actualPageWidth / device.dpi;
+                pageHeightInInches = actualPageHeight / device.dpi;
+            }
+
+            // Get actual page dimensions for pixel-per-inch calculations
+            let [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+            const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+
+            // Calculate pixels per inch
+            const pixelsPerInchWidth = actualPageWidth / pageWidthInInches;
+            const pixelsPerInchHeight = actualPageHeight / pageHeightInInches;
+
+            // Calculate margin sizes in inches
+            const marginTopIn = marginTop / pixelsPerInchHeight;
+            const marginBottomIn = marginBottom / pixelsPerInchHeight;
+            const marginLeftIn = marginLeft / pixelsPerInchWidth;
+            const marginRightIn = marginRight / pixelsPerInchWidth;
+
+            // Calculate usable area in inches
+            const usableWidthIn = pageWidthInInches - marginLeftIn - marginRightIn;
+            const usableHeightIn = pageHeightInInches - marginTopIn - marginBottomIn;
+
             // Display the result
             usableArea.textContent = `Usable Area: ${usableWidthIn.toFixed(2)}" × ${usableHeightIn.toFixed(2)}"`;
+        }
+
+        function updateDebugInfo() {
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+
+            // Canvas size is ALWAYS full device dimensions
+            const pageWidth = device.width;
+            const pageHeight = device.height;
+
+            let pageWidthInInches, pageHeightInInches;
+
+            // ALWAYS use the SELECTED page size for physical dimensions
+            const selectedLabel = pageSizeSelect.options[pageSizeSelect.selectedIndex].text;
+            const dimensionMatch = selectedLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+            if (dimensionMatch) {
+                pageWidthInInches = parseFloat(dimensionMatch[1]);
+                pageHeightInInches = parseFloat(dimensionMatch[2]);
+            } else {
+                // Fallback to device calculation
+                let [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+                const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                pageWidthInInches = actualPageWidth / device.dpi;
+                pageHeightInInches = actualPageHeight / device.dpi;
+            }
+
+            // Calculate outer margins (gray centering margins) in inches
+            let [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+            let offsetX = 0, offsetY = 0;
+            if (isScaled) {
+                offsetX = (device.width - selectedPageWidth) / 2;
+                offsetY = (device.height - selectedPageHeight) / 2;
+            }
+
+            // Get full device dimensions in inches for outer margin calculation
+            const fullDeviceLabel = pageSizeSelect.options[0].text;
+            const fullDeviceDimMatch = fullDeviceLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+            let fullDeviceWidthIn, fullDeviceHeightIn;
+            if (fullDeviceDimMatch) {
+                fullDeviceWidthIn = parseFloat(fullDeviceDimMatch[1]);
+                fullDeviceHeightIn = parseFloat(fullDeviceDimMatch[2]);
+            } else {
+                fullDeviceWidthIn = pageWidth / device.dpi;
+                fullDeviceHeightIn = pageHeight / device.dpi;
+            }
+
+            const outerMarginX = offsetX / (pageWidth / fullDeviceWidthIn);
+            const outerMarginY = offsetY / (pageHeight / fullDeviceHeightIn);
+
+            // Calculate user-specified margins in inches
+            const marginTop = parseFloat(marginTopSelect.value);
+            const marginBottom = parseFloat(marginBottomSelect.value);
+            const marginLeft = parseFloat(marginLeftSelect.value);
+            const marginRight = parseFloat(marginRightSelect.value);
+
+            const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+            const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+            const pixelsPerInchWidth = actualPageWidth / pageWidthInInches;
+            const pixelsPerInchHeight = actualPageHeight / pageHeightInInches;
+
+            const marginTopIn = marginTop / pixelsPerInchHeight;
+            const marginBottomIn = marginBottom / pixelsPerInchHeight;
+            const marginLeftIn = marginLeft / pixelsPerInchWidth;
+            const marginRightIn = marginRight / pixelsPerInchWidth;
+
+            // Total margins include outer margins + user-specified margins
+            const totalMarginTop = outerMarginY + marginTopIn;
+            const totalMarginBottom = outerMarginY + marginBottomIn;
+            const totalMarginLeft = outerMarginX + marginLeftIn;
+            const totalMarginRight = outerMarginX + marginRightIn;
+
+            debugInfo.textContent = `Canvas: ${pageWidth}×${pageHeight}px | Physical: ${pageWidthInInches.toFixed(2)}"×${pageHeightInInches.toFixed(2)}" | Device Max: ${device.width}×${device.height}px | Outer: ${outerMarginX.toFixed(2)}"×${outerMarginY.toFixed(2)}" | Margins T:${totalMarginTop.toFixed(2)}" B:${totalMarginBottom.toFixed(2)}" L:${totalMarginLeft.toFixed(2)}" R:${totalMarginRight.toFixed(2)}"`;
         }
         
         function updateTemplate() {
             const device = devices[deviceTypeSelect.value];
-            const [pageWidth, pageHeight] = pageSizeSelect.value.split(',').map(Number);
+            const isScaled = scaleTypeSelect.value === 'yes';
+
+            // Canvas/contentArea is ALWAYS full device dimensions
+            let pageWidth = device.width;
+            let pageHeight = device.height;
+
+            // But we need to know the selected page size for centering and grid drawing
+            let selectedPageWidth, selectedPageHeight;
+            [selectedPageWidth, selectedPageHeight] = pageSizeSelect.value.split(',').map(Number);
+
+            // Calculate centering offset for gray margins (only when scaled)
+            let offsetX = 0, offsetY = 0;
+            if (isScaled) {
+                offsetX = (device.width - selectedPageWidth) / 2;
+                offsetY = (device.height - selectedPageHeight) / 2;
+            }
+
             const marginTop = parseFloat(marginTopSelect.value);
             const marginBottom = parseFloat(marginBottomSelect.value);
             const marginLeft = parseFloat(marginLeftSelect.value);
@@ -1105,15 +1317,23 @@
             const gridSize = parseFloat(gridSizeSelect.value);
             const overlayMultiplier = parseInt(overlayGridSelect.value);
             const templateType = templateTypeSelect.value;
-            
-            const offsetX = (device.width - pageWidth) / 2;
-            const offsetY = (device.height - pageHeight) / 2;
-            
-            contentArea.style.width = pageWidth + 'px';
-            contentArea.style.height = pageHeight + 'px';
-            contentArea.style.left = offsetX + 'px';
-            contentArea.style.top = offsetY + 'px';
-            
+
+            // Position and size contentArea based on scaling mode
+            if (isScaled) {
+                // ContentArea is the selected page size, centered in the device canvas
+                contentArea.style.width = selectedPageWidth + 'px';
+                contentArea.style.height = selectedPageHeight + 'px';
+                contentArea.style.left = offsetX + 'px';
+                contentArea.style.top = offsetY + 'px';
+            } else {
+                // ContentArea fills the entire device
+                contentArea.style.width = pageWidth + 'px';
+                contentArea.style.height = pageHeight + 'px';
+                contentArea.style.left = '0px';
+                contentArea.style.top = '0px';
+            }
+
+            // Gray centering margins (only when scaled and page size < device size)
             if (offsetX > 0 || offsetY > 0) {
                 borderOverlay.style.boxShadow = `
                     inset ${offsetX}px 0 0 rgba(0,0,0,0.15),
@@ -1126,7 +1346,7 @@
             }
             
             contentArea.className = 'content-area ' + templateType;
-            
+
             if (templateType === 'lined' || templateType === 'grid' || templateType === 'dot-grid') {
                 gridSizeSelect.style.display = 'inline-block';
                 gridSizeLabel.style.display = 'inline';
@@ -1134,7 +1354,7 @@
                 gridSizeSelect.style.display = 'none';
                 gridSizeLabel.style.display = 'none';
             }
-            
+
             if (templateType === 'grid' || templateType === 'dot-grid') {
                 overlayGridSelect.style.display = 'inline-block';
                 overlayGridLabel.style.display = 'inline';
@@ -1142,66 +1362,119 @@
                 overlayGridSelect.style.display = 'none';
                 overlayGridLabel.style.display = 'none';
             }
-            
-            generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType);
-            
+
+            // Calculate physical dimensions for grid scaling and margin labels
+            let pageWidthInInches, pageHeightInInches;
+
+            // ALWAYS use the SELECTED page size for physical dimensions
+            // This is the actual page being created (e.g., 6" × 9")
+            const selectedLabel = pageSizeSelect.options[pageSizeSelect.selectedIndex].text;
+            const dimensionMatch = selectedLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+            if (dimensionMatch) {
+                pageWidthInInches = parseFloat(dimensionMatch[1]);
+                pageHeightInInches = parseFloat(dimensionMatch[2]);
+            } else {
+                // Fallback to device calculation
+                const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+                const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+                pageWidthInInches = actualPageWidth / device.dpi;
+                pageHeightInInches = actualPageHeight / device.dpi;
+            }
+
+            // Grid and marginLines are positioned relative to contentArea
+            // They should fill contentArea and let the borders define the pink margins
+            gridSvg.style.left = '0px';
+            gridSvg.style.top = '0px';
+            gridSvg.style.width = '100%';
+            gridSvg.style.height = '100%';
+
+            // Generate grid with the appropriate dimensions
+            if (isScaled) {
+                generateGridSvg(selectedPageWidth, selectedPageHeight, gridSize, overlayMultiplier, templateType, isScaled, pageWidthInInches, pageHeightInInches);
+            } else {
+                generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType, isScaled, pageWidthInInches, pageHeightInInches);
+            }
+
+            // User-specified pinkish margins (borders on marginLines element)
+            // marginLines fills contentArea using the CSS top/left/right/bottom: 0
+            // Don't set width/height as that conflicts with right/bottom and causes overflow
+            marginLines.style.boxSizing = 'border-box';
+
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
                 marginLines.style.borderTopWidth = marginTop + 'px';
                 marginLines.style.borderBottomWidth = marginBottom + 'px';
                 marginLines.style.borderLeftWidth = marginLeft + 'px';
                 marginLines.style.borderRightWidth = marginRight + 'px';
                 marginLines.style.borderStyle = 'solid';
-                
+
                 if (deviceTypeSelect.value === 'rm2') {
                     marginLines.style.borderColor = 'rgba(100, 100, 100, 0.4)';
                 } else {
                     marginLines.style.borderColor = 'rgba(255, 100, 100, 0.3)';
                 }
-                
+
                 marginLines.style.display = 'block';
             } else {
                 marginLines.style.display = 'none';
             }
             
+            // Position URL text in the top margin area (relative to contentArea)
             if (marginTop >= 15) {
                 urlText.style.display = 'block';
+                urlText.style.top = '5px';
+                urlText.style.left = '50%';
             } else {
                 urlText.style.display = 'none';
             }
-            
-            // Update margin labels
-            const usableWidthPx = pageWidth - marginLeft - marginRight;
-            const usableHeightPx = pageHeight - marginTop - marginBottom;
-            const usableWidthIn = usableWidthPx / device.dpi;
-            const usableHeightIn = usableHeightPx / device.dpi;
-            
+
+            // Calculate physical dimensions and margins
+            const actualPageWidth = isScaled ? selectedPageWidth : pageWidth;
+            const actualPageHeight = isScaled ? selectedPageHeight : pageHeight;
+
+            // Calculate pixels per inch
+            const pixelsPerInchWidth = actualPageWidth / pageWidthInInches;
+            const pixelsPerInchHeight = actualPageHeight / pageHeightInInches;
+
+            // Calculate margin sizes in inches
+            const marginTopIn = marginTop / pixelsPerInchHeight;
+            const marginBottomIn = marginBottom / pixelsPerInchHeight;
+            const marginLeftIn = marginLeft / pixelsPerInchWidth;
+            const marginRightIn = marginRight / pixelsPerInchWidth;
+
+            // Calculate usable area in inches
+            const usableWidthIn = pageWidthInInches - marginLeftIn - marginRightIn;
+            const usableHeightIn = pageHeightInInches - marginTopIn - marginBottomIn;
+
             const showDimensions = showMarginDimensionsCheckbox.checked;
-            
+
+            // Margin labels are positioned absolutely relative to templatePage, not contentArea
             // Top margin label - show usable width in the top margin area
             if (showDimensions && marginTop >= 20) {
                 marginLabelTop.textContent = `${usableWidthIn.toFixed(2)}"`;
                 marginLabelTop.style.display = 'block';
                 marginLabelTop.style.top = (offsetY + marginTop / 2) + 'px';
-                marginLabelTop.style.left = (offsetX + pageWidth / 2) + 'px';
+                marginLabelTop.style.left = (offsetX + actualPageWidth / 2) + 'px';
             } else {
                 marginLabelTop.style.display = 'none';
             }
-            
+
             // Right margin label - show usable height in the right margin area (vertical)
             if (showDimensions && marginRight >= 20) {
                 marginLabelRight.textContent = `${usableHeightIn.toFixed(2)}"`;
                 marginLabelRight.style.display = 'block';
-                marginLabelRight.style.top = (offsetY + pageHeight / 2) + 'px';
-                marginLabelRight.style.left = (offsetX + pageWidth - marginRight / 2) + 'px';
+                marginLabelRight.style.top = (offsetY + actualPageHeight / 2) + 'px';
+                marginLabelRight.style.left = (offsetX + actualPageWidth - marginRight / 2) + 'px';
             } else {
                 marginLabelRight.style.display = 'none';
             }
-            
-            updateRulers();
+
+            updateRulers(offsetX, offsetY, selectedPageWidth, selectedPageHeight);
             updateUsableArea();
+            updateDebugInfo();
         }
         
         deviceTypeSelect.addEventListener('change', updatePageSizes);
+        scaleTypeSelect.addEventListener('change', updatePageSizes);
         templateTypeSelect.addEventListener('change', updateTemplate);
         pageSizeSelect.addEventListener('change', () => {
             applyDefaultMargins();
@@ -1221,6 +1494,7 @@
         updatePageSizes();
         updateRecommendation();
         updateUsableArea();
+        updateDebugInfo();
     </script>
 </body>
 </html>
