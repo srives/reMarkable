@@ -350,7 +350,12 @@
                 <option value="paperpromove">Paper Pro Move</option>
             </select>
 
-            <label for="scaleType" style="margin-left: 20px;">Scale:</label>
+            <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
+            <select id="pageSize">
+                <option value="1620,2160">Full reMarkable Pro (7.07" × 9.43")</option>
+            </select>
+
+            <label for="scaleType" style="margin-left: 20px;">Scale by DPI:</label>
             <select id="scaleType">
                 <option value="yes" selected>Yes</option>
                 <option value="no">No</option>
@@ -366,11 +371,6 @@
                 <option value="rgba(255, 182, 193, 0.2)" style="color: rgb(255, 100, 150);">Light Pink</option>
                 <option value="rgba(255, 255, 200, 0.2)" style="color: rgb(200, 200, 100);">Light Yellow</option>
                 <option value="rgba(144, 238, 144, 0.2)" style="color: rgb(100, 200, 100);">Light Green</option>
-            </select>
-
-            <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
-            <select id="pageSize">
-                <option value="1620,2160">Full reMarkable Pro (7.07" × 9.43")</option>
             </select>
         </div>
         
@@ -693,7 +693,7 @@
         <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.2</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
-            <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
+            <li><strong>Scale by DPI:</strong> DPI (Dots per Inch, aka PPI pixels per inch). Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
             <li><strong>Page Size:</strong> Select your target book/page size. Default publishing margins are automatically applied when Scale is "Yes".</li>
             <li><strong>Binding Type & Publisher/Platform:</strong> View margin recommendations for different binding types and publishing platforms. Click "Apply Recommended Margins" to use suggested defaults.</li>
             <li><strong>Margins:</strong> Adjust individual margins for top, bottom, left, and right (0" to 1.5" in 0.05" increments). Margins are shown with borders (gray for reMarkable 1/2, red for color devices). The usable area (width × height inside margins) is displayed next to the Right margin control.</li>
@@ -789,6 +789,150 @@
 
         let rulerFontSize = 10; // Default ruler text size
         let isOddPage = true; // Track whether we're showing odd or even page
+
+        // Cookie management functions
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+            document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+            }
+            return null;
+        }
+
+        function saveSettings() {
+            setCookie('rm_deviceType', deviceTypeSelect.value);
+            setCookie('rm_scaleType', scaleTypeSelect.value);
+            setCookie('rm_pageSize', pageSizeSelect.value);
+            setCookie('rm_templateType', templateTypeSelect.value);
+            setCookie('rm_gridSize', gridSizeSelect.value);
+            setCookie('rm_overlayGrid', overlayGridSelect.value);
+            setCookie('rm_bindingType', bindingTypeSelect.value);
+            setCookie('rm_platform', platformSelect.value);
+            setCookie('rm_marginTop', marginTopSelect.value);
+            setCookie('rm_marginBottom', marginBottomSelect.value);
+            setCookie('rm_marginLeft', marginLeftSelect.value);
+            setCookie('rm_marginRight', marginRightSelect.value);
+            setCookie('rm_marginColor', marginColorSelect.value);
+            setCookie('rm_useGutterMargins', useGutterMarginsCheckbox.checked);
+            setCookie('rm_gutterLeft', gutterLeftSelect.value);
+            setCookie('rm_gutterRight', gutterRightSelect.value);
+            setCookie('rm_gutterColor', gutterColorSelect.value);
+            setCookie('rm_centeringMarginColor', centeringMarginColorSelect.value);
+            setCookie('rm_showRulers', showRulersCheckbox.checked);
+            setCookie('rm_showMarginDimensions', showMarginDimensionsCheckbox.checked);
+            setCookie('rm_showMarginTexts', showMarginTextsCheckbox.checked);
+            setCookie('rm_rulerFontSize', rulerFontSize);
+            setCookie('rm_pdfPageCount', pdfPageCount.value);
+        }
+
+        function loadSettings() {
+            const savedDevice = getCookie('rm_deviceType');
+            if (savedDevice && deviceTypeSelect.querySelector(`option[value="${savedDevice}"]`)) {
+                deviceTypeSelect.value = savedDevice;
+            }
+
+            const savedScale = getCookie('rm_scaleType');
+            if (savedScale) scaleTypeSelect.value = savedScale;
+
+            const savedPageSize = getCookie('rm_pageSize');
+            if (savedPageSize) {
+                // Will be set after updatePageSizes() populates the dropdown
+                setTimeout(() => {
+                    if (pageSizeSelect.querySelector(`option[value="${savedPageSize}"]`)) {
+                        pageSizeSelect.value = savedPageSize;
+                    }
+                }, 0);
+            }
+
+            const savedTemplateType = getCookie('rm_templateType');
+            if (savedTemplateType) templateTypeSelect.value = savedTemplateType;
+
+            const savedGridSize = getCookie('rm_gridSize');
+            if (savedGridSize) gridSizeSelect.value = savedGridSize;
+
+            const savedOverlayGrid = getCookie('rm_overlayGrid');
+            if (savedOverlayGrid) overlayGridSelect.value = savedOverlayGrid;
+
+            const savedBindingType = getCookie('rm_bindingType');
+            if (savedBindingType) bindingTypeSelect.value = savedBindingType;
+
+            const savedPlatform = getCookie('rm_platform');
+            if (savedPlatform) platformSelect.value = savedPlatform;
+
+            const savedMarginColor = getCookie('rm_marginColor');
+            if (savedMarginColor) marginColorSelect.value = savedMarginColor;
+
+            const savedUseGutterMargins = getCookie('rm_useGutterMargins');
+            if (savedUseGutterMargins !== null) useGutterMarginsCheckbox.checked = savedUseGutterMargins === 'true';
+
+            const savedGutterColor = getCookie('rm_gutterColor');
+            if (savedGutterColor) gutterColorSelect.value = savedGutterColor;
+
+            const savedCenteringMarginColor = getCookie('rm_centeringMarginColor');
+            if (savedCenteringMarginColor) centeringMarginColorSelect.value = savedCenteringMarginColor;
+
+            const savedShowRulers = getCookie('rm_showRulers');
+            if (savedShowRulers !== null) showRulersCheckbox.checked = savedShowRulers === 'true';
+
+            const savedShowMarginDimensions = getCookie('rm_showMarginDimensions');
+            if (savedShowMarginDimensions !== null) showMarginDimensionsCheckbox.checked = savedShowMarginDimensions === 'true';
+
+            const savedShowMarginTexts = getCookie('rm_showMarginTexts');
+            if (savedShowMarginTexts !== null) showMarginTextsCheckbox.checked = savedShowMarginTexts === 'true';
+
+            const savedRulerFontSize = getCookie('rm_rulerFontSize');
+            if (savedRulerFontSize) {
+                rulerFontSize = parseInt(savedRulerFontSize);
+                updateRulerSizeLabel();
+            }
+
+            const savedPdfPageCount = getCookie('rm_pdfPageCount');
+            if (savedPdfPageCount) pdfPageCount.value = savedPdfPageCount;
+
+            // Margins will be loaded after dropdowns are populated
+            setTimeout(() => {
+                const savedMarginTop = getCookie('rm_marginTop');
+                if (savedMarginTop && marginTopSelect.querySelector(`option[value="${savedMarginTop}"]`)) {
+                    marginTopSelect.value = savedMarginTop;
+                }
+
+                const savedMarginBottom = getCookie('rm_marginBottom');
+                if (savedMarginBottom && marginBottomSelect.querySelector(`option[value="${savedMarginBottom}"]`)) {
+                    marginBottomSelect.value = savedMarginBottom;
+                }
+
+                const savedMarginLeft = getCookie('rm_marginLeft');
+                if (savedMarginLeft && marginLeftSelect.querySelector(`option[value="${savedMarginLeft}"]`)) {
+                    marginLeftSelect.value = savedMarginLeft;
+                }
+
+                const savedMarginRight = getCookie('rm_marginRight');
+                if (savedMarginRight && marginRightSelect.querySelector(`option[value="${savedMarginRight}"]`)) {
+                    marginRightSelect.value = savedMarginRight;
+                }
+
+                const savedGutterLeft = getCookie('rm_gutterLeft');
+                if (savedGutterLeft && gutterLeftSelect.querySelector(`option[value="${savedGutterLeft}"]`)) {
+                    gutterLeftSelect.value = savedGutterLeft;
+                }
+
+                const savedGutterRight = getCookie('rm_gutterRight');
+                if (savedGutterRight && gutterRightSelect.querySelector(`option[value="${savedGutterRight}"]`)) {
+                    gutterRightSelect.value = savedGutterRight;
+                }
+
+                updateTemplate();
+            }, 100);
+        }
 
         const devices = {
             rm2: {
@@ -901,10 +1045,13 @@
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
 
-                        // Perfect binding needs gutter of 0.625"-0.875" depending on page count
-                        const gutterMin = Math.max(margins.left, 0.625);
+                        // Equalize left/right margins
+                        const leftRight = Math.min(margins.left, margins.right);
+                        const gutterDiff = Math.abs(margins.left - margins.right);
+                        const gutterMin = Math.max(gutterDiff, 0.625);
                         const gutterMax = gutterMin + 0.125;
-                        return `For this size: Gutter ${gutterMin}\"-${gutterMax}\" (increases with page count), Top ${margins.top}\", Bottom ${margins.bottom}\", Outer ${margins.right}\". Minimum 0.375\" gutter, pages glued into spine.`;
+                        let gutterText = gutterDiff > 0 ? ` Recommended gutter: ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".` : '';
+                        return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\". <strong>Gutter:</strong> ${gutterMin}\"-${gutterMax}\" (increases with page count).${gutterText} Minimum 0.375\" gutter, pages glued into spine.`;
                     }
                 },
                 saddle: {
@@ -914,10 +1061,18 @@
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
 
+                        // Equalize left/right margins
+                        const leftRight = Math.min(margins.left, margins.right);
+                        const gutterDiff = Math.abs(margins.left - margins.right);
+                        let gutterText = '';
+                        if (gutterDiff > 0) {
+                            gutterText = ` <strong>Gutter:</strong> ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\" (optional, pages lie flat).`;
+                        }
+
                         // Saddle stitch can use smaller, more equal margins (pages lie flat)
                         const minMargin = 0.25;
-                        const avgMargin = Math.max(minMargin, Math.min(margins.top, margins.bottom, margins.left, margins.right) - 0.125);
-                        return `For this size: All margins ${avgMargin.toFixed(2)}\"-${(avgMargin + 0.125).toFixed(2)}\" (more equal). Pages lie flat when folded. Best for 8-60 pages. Requires page count in multiples of 4.`;
+                        const avgMargin = Math.max(minMargin, Math.min(margins.top, margins.bottom, leftRight) - 0.125);
+                        return `For this size: All margins ${avgMargin.toFixed(2)}\"-${(avgMargin + 0.125).toFixed(2)}\" (more equal). Pages lie flat when folded.${gutterText} Best for 8-60 pages. Requires page count in multiples of 4.`;
                     }
                 },
                 spiral: {
@@ -927,10 +1082,12 @@
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
 
-                        // Spiral needs 0.5"-0.625" gutter for holes
-                        const gutter = 0.625;
-                        const other = Math.max(0.375, margins.right);
-                        return `For this size: Gutter ${gutter}\" (for punch holes, drills 1/4\" in), Other margins ${other}\". Pages lie completely flat and rotate 360°. Holes punch 3/16\"-1/4\" into gutter.`;
+                        // Equalize left/right margins
+                        const leftRight = Math.min(margins.left, margins.right);
+                        const gutterDiff = Math.abs(margins.left - margins.right);
+                        const gutter = Math.max(gutterDiff, 0.625);
+                        let gutterText = gutterDiff > 0 ? ` Recommended gutter: ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".` : '';
+                        return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\". <strong>Gutter:</strong> ${gutter}\" minimum (for punch holes, drills 1/4\" in).${gutterText} Pages lie completely flat and rotate 360°. Holes punch 3/16\"-1/4\" into gutter.`;
                     }
                 },
                 wireo: {
@@ -940,10 +1097,12 @@
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
 
-                        // Wire-O needs 0.5"-0.875" gutter for square holes
-                        const gutter = 0.75;
-                        const other = Math.max(0.25, margins.right);
-                        return `For this size: Gutter ${gutter}\"-0.875\" (for wire loops, punches 1/4\" in), Other margins ${other}\". Square holes. Pages lay flat and flip 360°. Recommended: 0.875\" gutter, 0.25\" others.`;
+                        // Equalize left/right margins
+                        const leftRight = Math.min(margins.left, margins.right);
+                        const gutterDiff = Math.abs(margins.left - margins.right);
+                        const gutter = Math.max(gutterDiff, 0.75);
+                        let gutterText = gutterDiff > 0 ? ` Recommended gutter: ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".` : '';
+                        return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\". <strong>Gutter:</strong> ${gutter}\"-0.875\" minimum (for wire loops, punches 1/4\" in).${gutterText} Square holes. Pages lay flat and flip 360°.`;
                     }
                 },
                 case: {
@@ -953,12 +1112,15 @@
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
 
-                        // Case binding needs generous margins: 0.75"-1" gutter
-                        const gutterMin = Math.max(margins.left, 0.75);
+                        // Equalize left/right margins
+                        const leftRight = Math.min(margins.left, margins.right);
+                        const gutterDiff = Math.abs(margins.left - margins.right);
+                        const gutterMin = Math.max(gutterDiff, 0.75);
                         const gutterMax = Math.max(gutterMin, 1.0);
                         const topMin = Math.max(margins.top, 0.625);
                         const bottomMin = Math.max(margins.bottom, 0.75);
-                        return `For this size: Gutter ${gutterMin}\"-${gutterMax}\" (rigid spine), Top ${topMin}\", Bottom ${bottomMin}\", Outer ${Math.max(margins.right, 0.625)}\". More generous margins for premium feel. 6mm margin each side of gutter.`;
+                        let gutterText = gutterDiff > 0 ? ` Recommended gutter: ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".` : '';
+                        return `For this size: Top ${topMin}\", Bottom ${bottomMin}\", Left/Right ${leftRight}\". <strong>Gutter:</strong> ${gutterMin}\"-${gutterMax}\" minimum (rigid spine).${gutterText} More generous margins for premium feel. 6mm margin each side of gutter.`;
                     }
                 }
             },
@@ -969,7 +1131,13 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Standard industry practice with bottom margin typically largest for page numbers.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            let gutterText = '';
+                            if (gutterDiff > 0) {
+                                gutterText = ` <strong>Gutter:</strong> ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\" (please validate).`;
+                            }
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\".${gutterText} Standard industry practice with bottom margin typically largest for page numbers.`;
                         }
                         return "Standard industry practice: Inner 0.625\"-0.75\", Top 0.5\"-0.625\", Bottom 0.625\"-0.75\", Outer 0.5\"-0.625\". Bottom margin typically largest.";
                     }
@@ -980,7 +1148,13 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". KDP requires minimum 0.375\" all sides (safe zone). <strong>Gutter:</strong> KDP includes gutter in the inside margin - use 0.5\" total inside for <24 pages, 0.625\" for 24-150 pages, 0.75\" for 151-300 pages, 0.875\" for 301-500 pages, 1.0\" for 501-800 pages.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            let gutterText = ` <strong>Gutter:</strong> KDP includes gutter in the inside margin - use 0.5\" total inside for <24 pages, 0.625\" for 24-150 pages, 0.75\" for 151-300 pages, 0.875\" for 301-500 pages, 1.0\" for 501-800 pages.`;
+                            if (gutterDiff > 0) {
+                                gutterText += ` Recommended gutter for this page: ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".`;
+                            }
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\". KDP requires minimum 0.375\" all sides (safe zone).${gutterText}`;
                         }
                         return "Minimum 0.375\" safe zone all sides. Gutter included in inside margin: 0.5\" total for thin books, 0.75\"-1\" for 200+ pages.";
                     }
@@ -991,7 +1165,10 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". IngramSpark requires minimum 0.5\" all sides, with text at least 0.25\" from trim line. <strong>Gutter:</strong> Add 0.125\" (3mm) white strip on bind side for perfect bound/hardcover books, in addition to the 0.5\" margin. Total inside: 0.625\" minimum.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            const recommendedGutter = gutterDiff > 0 ? gutterDiff : 0.125;
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\". IngramSpark requires minimum 0.5\" all sides, with text at least 0.25\" from trim line. <strong>Gutter:</strong> Add ${recommendedGutter.toFixed(3).replace(/\.?0+$/, '')}\" white strip on bind side for perfect bound/hardcover books. Total inside: ${(leftRight + recommendedGutter).toFixed(3).replace(/\.?0+$/, '')}\" minimum.`;
                         }
                         return "Minimum 0.5\" all sides required. Text must be 0.25\" from trim. Gutter: 0.125\" additional on bind side for perfect/hardcover.";
                     }
@@ -1002,7 +1179,10 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Lulu requires 0.5\" safety margin all sides. <strong>Gutter:</strong> 0.2\"-0.3\" for most bindings, 0.375\" (9mm) for coil-bound books (coils bite ~0.312\" into spine edge).`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            const recommendedGutter = gutterDiff > 0 ? gutterDiff : 0.25;
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\". Lulu requires 0.5\" safety margin all sides. <strong>Gutter:</strong> ${recommendedGutter.toFixed(3).replace(/\.?0+$/, '')}\" for most bindings, 0.375\" (9mm) for coil-bound books (coils bite ~0.312\" into spine edge). Total inside: ${(leftRight + recommendedGutter).toFixed(3).replace(/\.?0+$/, '')}\".`;
                         }
                         return "Minimum 0.5\" safety margin all sides. Gutter: 0.2\"-0.3\" standard, 0.375\" for coil-bound. Total inside: 0.7\"-0.875\".";
                     }
@@ -1013,7 +1193,13 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". B&N Press standard is 0.5\" three sides, 0.75\" inside margin.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            let gutterText = '';
+                            if (gutterDiff > 0) {
+                                gutterText = ` <strong>Gutter:</strong> ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".`;
+                            }
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\".${gutterText} B&N Press standard is 0.5\" three sides, 0.75\" inside margin.`;
                         }
                         return "Standard: 0.5\" three sides, 0.75\" inside margin. Adjust gutter for thicker books.";
                     }
@@ -1024,7 +1210,13 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Draft2Digital uses automated layout but these margins work well with their system.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            let gutterText = '';
+                            if (gutterDiff > 0) {
+                                gutterText = ` <strong>Gutter:</strong> ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".`;
+                            }
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\".${gutterText} Draft2Digital uses automated layout but these margins work well with their system.`;
                         }
                         return "Works with multiple print partners. Safe margins: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\". Follows KDP guidelines generally.";
                     }
@@ -1035,7 +1227,13 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Blurb requires critical content 0.25\" from trim, with 0.5\" recommended for safety.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            let gutterText = '';
+                            if (gutterDiff > 0) {
+                                gutterText = ` <strong>Gutter:</strong> ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".`;
+                            }
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\".${gutterText} Blurb requires critical content 0.25\" from trim, with 0.5\" recommended for safety.`;
                         }
                         return "Critical content must be 0.25\" from trim. Standard: 0.5\" minimum all sides. Trade books: Inside 0.625\", Outside 0.5\", Top 0.5\", Bottom 0.625\".";
                     }
@@ -1046,7 +1244,13 @@
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". BookBaby recommends generous margins (0.875\" left/right minimum) for professional appearance.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            let gutterText = '';
+                            if (gutterDiff > 0) {
+                                gutterText = ` <strong>Gutter:</strong> ${gutterDiff.toFixed(3).replace(/\.?0+$/, '')}\".`;
+                            }
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left/Right ${leftRight}\".${gutterText} BookBaby recommends generous margins (0.875\" left/right minimum) for professional appearance.`;
                         }
                         return "Minimum 0.5\" all sides recommended. Professional standard: Inside 0.75\"-0.875\", Outside 0.5\", Top 0.625\", Bottom 0.75\".";
                     }
@@ -1058,9 +1262,11 @@
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
                             // Canva requires minimum 0.25" from trim, with gutter depending on binding type
-                            const minMargin = Math.max(margins.top, margins.bottom, margins.right, 0.25);
-                            const gutter = Math.max(margins.left, 0.6); // 0.6" for perfect bound
-                            return `For this size: Gutter ${gutter}\" (0.3\" smyth sewn, 0.6\" perfect bound), Other margins ${minMargin}\". Canva adds 0.125\" bleed automatically. Keep all text/elements minimum 0.25\" from trim lines.`;
+                            const leftRight = Math.min(margins.left, margins.right);
+                            const gutterDiff = Math.abs(margins.left - margins.right);
+                            const recommendedGutter = gutterDiff > 0 ? gutterDiff : 0.3;
+                            const minMargin = Math.max(margins.top, margins.bottom, leftRight, 0.25);
+                            return `For this size: Gutter ${recommendedGutter.toFixed(3).replace(/\.?0+$/, '')}\" (0.3\" smyth sewn, 0.6\" perfect bound), Other margins ${minMargin}\". Canva adds 0.125\" bleed automatically. Keep all text/elements minimum 0.25\" from trim lines.`;
                         }
                         return "Minimum 0.25\" all sides from trim. Smyth sewn: 0.3\" gutter, Perfect bound: 0.6\" gutter. Canva adds 0.125\" (3mm) bleed on all sides automatically.";
                     }
@@ -1197,6 +1403,7 @@
                 rulerFontSize += 1;
                 updateRulerSizeLabel();
                 updateTemplate();
+                saveSettings();
             }
         }
 
@@ -1205,6 +1412,7 @@
                 rulerFontSize -= 1;
                 updateRulerSizeLabel();
                 updateTemplate();
+                saveSettings();
             }
         }
 
@@ -1229,10 +1437,13 @@
             const dpi = isScaled ? device.dpi : device.unscaledDpi;
 
             if (marginsInches) {
+                // Equalize left/right margins to the smallest value
+                const leftRightInches = Math.min(marginsInches.left, marginsInches.right);
+
                 const topPx = Math.round(marginsInches.top * dpi * 100) / 100;
                 const bottomPx = Math.round(marginsInches.bottom * dpi * 100) / 100;
-                const leftPx = Math.round(marginsInches.left * dpi * 100) / 100;
-                const rightPx = Math.round(marginsInches.right * dpi * 100) / 100;
+                const leftPx = Math.round(leftRightInches * dpi * 100) / 100;
+                const rightPx = Math.round(leftRightInches * dpi * 100) / 100;
 
                 marginTopSelect.value = topPx;
                 marginBottomSelect.value = bottomPx;
@@ -2696,31 +2907,40 @@ ${gridSvgContent}
             }
         }
 
-        deviceTypeSelect.addEventListener('change', updatePageSizes);
-        scaleTypeSelect.addEventListener('change', updatePageSizes);
-        templateTypeSelect.addEventListener('change', updateTemplate);
+        deviceTypeSelect.addEventListener('change', () => { updatePageSizes(); saveSettings(); });
+        scaleTypeSelect.addEventListener('change', () => { updatePageSizes(); saveSettings(); });
+        templateTypeSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
         pageSizeSelect.addEventListener('change', () => {
             applyDefaultMargins();
             updateTemplate();
             updateRecommendation();
+            saveSettings();
         });
-        bindingTypeSelect.addEventListener('change', updateRecommendation);
-        platformSelect.addEventListener('change', updateRecommendation);
-        marginTopSelect.addEventListener('change', updateTemplate);
-        marginBottomSelect.addEventListener('change', updateTemplate);
-        marginLeftSelect.addEventListener('change', updateTemplate);
-        marginRightSelect.addEventListener('change', updateTemplate);
-        marginColorSelect.addEventListener('change', updateTemplate);
-        gridSizeSelect.addEventListener('change', updateTemplate);
-        overlayGridSelect.addEventListener('change', updateTemplate);
-        showRulersCheckbox.addEventListener('change', updateRulers);
-        showMarginDimensionsCheckbox.addEventListener('change', updateTemplate);
-        useGutterMarginsCheckbox.addEventListener('change', updateTemplate);
-        gutterLeftSelect.addEventListener('change', updateTemplate);
-        gutterRightSelect.addEventListener('change', updateTemplate);
-        gutterColorSelect.addEventListener('change', updateTemplate);
-        showMarginTextsCheckbox.addEventListener('change', updateTemplate);
-        centeringMarginColorSelect.addEventListener('change', updateTemplate);
+        bindingTypeSelect.addEventListener('change', () => { updateRecommendation(); saveSettings(); });
+        platformSelect.addEventListener('change', () => { updateRecommendation(); saveSettings(); });
+        marginTopSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        marginBottomSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        marginLeftSelect.addEventListener('change', () => {
+            marginRightSelect.value = marginLeftSelect.value;
+            updateTemplate();
+            saveSettings();
+        });
+        marginRightSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        marginColorSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        gridSizeSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        overlayGridSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        showRulersCheckbox.addEventListener('change', () => { updateRulers(); saveSettings(); });
+        showMarginDimensionsCheckbox.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        useGutterMarginsCheckbox.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        gutterLeftSelect.addEventListener('change', () => {
+            gutterRightSelect.value = gutterLeftSelect.value;
+            updateTemplate();
+            saveSettings();
+        });
+        gutterRightSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        gutterColorSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        showMarginTextsCheckbox.addEventListener('change', () => { updateTemplate(); saveSettings(); });
+        centeringMarginColorSelect.addEventListener('change', () => { updateTemplate(); saveSettings(); });
 
         // Populate PDF page count dropdown
         for (let i = 1; i <= 400; i++) {
@@ -2733,6 +2953,12 @@ ${gridSvgContent}
             pdfPageCount.appendChild(option);
         }
 
+        pdfPageCount.addEventListener('change', saveSettings);
+
+        // Load saved settings first
+        loadSettings();
+
+        // Then initialize the page
         updatePageSizes();
         updateRecommendation();
         updateUsableArea();
