@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rives' reMarkable Templates for Book Publishing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -682,6 +684,7 @@
             <button onclick="savePDF()" style="background: #28a745; margin-left: 10px;">Save Workbook PDF</button>
             <button onclick="saveSVG()" style="background: #17a2b8; margin-left: 20px;">Save Template SVG</button>
             <button onclick="savePNG()" style="background: #ffc107; color: #000; margin-left: 10px;">Save Template PNG</button>
+            <button onclick="saveMSWord()" style="background: #0078d4; color: white; margin-left: 20px;">Save MS-Word</button>
         </div>
 
         <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-left: 4px solid #6c757d; border-radius: 4px; font-size: 12px; font-family: monospace;">
@@ -702,7 +705,7 @@
             <li><strong>Overlay Every:</strong> For grid/dot-grid templates, add darker lines/dots every N squares for major/minor grid divisions.</li>
             <li><strong>Show Rulers:</strong> Check this box to display inch measurements along the left and bottom edges (marks every 0.25").</li>
             <li><strong>Show Wd × Ht:</strong> Check this box to display the usable dimensions within the margin areas (width in top margin, height in right margin).</li>
-            <li><strong>Export:</strong> Use "Save PDF" for print-ready PDFs (opens print dialog), "Save SVG" for vector format, or "Save PNG" for raster images.</li>
+            <li><strong>Export:</strong> Use "Save Workbook PDF" for print-ready PDFs (opens print dialog), "Save Template SVG" for vector format, "Save Template PNG" for raster images, or "Save MS-Word" to create a Microsoft Word document with cover page, front matter (TOC, dedication), and content pages with proper margins. The Word document automatically sets up odd/even page margins when gutters are enabled, includes page numbers starting at page 1 after front matter, and uses section breaks so new pages inherit the correct odd/even margins.</li>
         </ul>
         Transfer the SVG to your reMarkable device via a template installer tool: <a href="https://www.einkpads.com/products/template-installer-3?srsltid=AfmBOopwJoHFtn5R7SyFYEUARPLh2xGRlolOHLzbEUVteQBU2MMFFTDN" target="_blank">eInkPads Template Installer</a>, <a href="https://www.einkpads.com/pages/enhance-your-remarkable-tablet-with-einkpads" target="_blank">eInkPads Desktop App</a>, or <a href="https://freeremarkabletools.net" target="_blank">a free solution</a>
     </div>
@@ -2263,9 +2266,230 @@ ${gridSvgContent}
             img.src = svgUrl;
         }
 
+        async function saveMSWord() {
+            // Check if JSZip library is loaded
+            if (typeof JSZip === 'undefined') {
+                alert('The document library is still loading. Please wait a moment and try again.');
+                return;
+            }
+
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+            const useGutters = useGutterMarginsCheckbox.checked;
+
+            // Get margin values in pixels and convert to inches
+            const marginTopPx = parseFloat(marginTopSelect.value);
+            const marginBottomPx = parseFloat(marginBottomSelect.value);
+            const marginLeftPx = parseFloat(marginLeftSelect.value);
+            const marginRightPx = parseFloat(marginRightSelect.value);
+            const gutterLeftPx = parseFloat(gutterLeftSelect.value);
+            const gutterRightPx = parseFloat(gutterRightSelect.value);
+
+            const marginTopIn = marginTopPx / dpi;
+            const marginBottomIn = marginBottomPx / dpi;
+            const marginLeftIn = marginLeftPx / dpi;
+            const marginRightIn = marginRightPx / dpi;
+            const gutterLeftIn = gutterLeftPx / dpi;
+            const gutterRightIn = gutterRightPx / dpi;
+
+            const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
+            const pageLabel = selectedOption.textContent.trim();
+            const filename = pageLabel
+                .replace(/[^\w\s\-\(\)\.]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/_{2,}/g, '_') + '.docx';
+
+            // Get target page size from selected option
+            const dimensionMatch = pageLabel.match(/\((\d+\.?\d*)"?\s*×\s*(\d+\.?\d*)"?\)/);
+            let targetPageWidthIn = 8.5;  // Default
+            let targetPageHeightIn = 11;  // Default
+            if (dimensionMatch) {
+                targetPageWidthIn = parseFloat(dimensionMatch[1]);
+                targetPageHeightIn = parseFloat(dimensionMatch[2]);
+            }
+
+            // Convert inches to twips (1 inch = 1440 twips)
+            const inchToTwip = 1440;
+
+            // Determine paper size and calculate final margins
+            let pageWidth, pageHeight;
+            let finalMarginTop, finalMarginBottom, finalOddPageLeft, finalOddPageRight, finalEvenPageLeft, finalEvenPageRight;
+
+            if (isScaled) {
+                // When scaled, use 8.5 x 11 paper and add centering margins
+                pageWidth = 8.5 * inchToTwip;
+                pageHeight = 11 * inchToTwip;
+
+                // Calculate centering margins to create the target page size within 8.5 x 11
+                const centeringLeftRight = (8.5 - targetPageWidthIn) / 2;
+                const centeringTopBottom = (11 - targetPageHeightIn) / 2;
+
+                // Final margins = centering margins + content margins + gutter margins
+                finalMarginTop = Math.round((centeringTopBottom + marginTopIn) * inchToTwip);
+                finalMarginBottom = Math.round((centeringTopBottom + marginBottomIn) * inchToTwip);
+                finalOddPageLeft = Math.round((centeringLeftRight + marginLeftIn + gutterLeftIn) * inchToTwip);
+                finalOddPageRight = Math.round((centeringLeftRight + marginRightIn) * inchToTwip);
+                finalEvenPageLeft = Math.round((centeringLeftRight + marginLeftIn) * inchToTwip);
+                finalEvenPageRight = Math.round((centeringLeftRight + marginRightIn + gutterRightIn) * inchToTwip);
+            } else {
+                // When not scaled, use the target page size directly
+                pageWidth = Math.round(targetPageWidthIn * inchToTwip);
+                pageHeight = Math.round(targetPageHeightIn * inchToTwip);
+
+                // Final margins = content margins + gutter margins only
+                finalMarginTop = Math.round(marginTopIn * inchToTwip);
+                finalMarginBottom = Math.round(marginBottomIn * inchToTwip);
+                finalOddPageLeft = Math.round((marginLeftIn + gutterLeftIn) * inchToTwip);
+                finalOddPageRight = Math.round(marginRightIn * inchToTwip);
+                finalEvenPageLeft = Math.round(marginLeftIn * inchToTwip);
+                finalEvenPageRight = Math.round((marginRightIn + gutterRightIn) * inchToTwip);
+            }
+
+            // Create ZIP file for DOCX
+            const zip = new JSZip();
+
+            // [Content_Types].xml
+            zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>
+</Types>`);
+
+            // _rels/.rels
+            zip.folder('_rels').file('.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+
+            // word/_rels/document.xml.rels
+            zip.folder('word').folder('_rels').file('document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
+</Relationships>`);
+
+            // Build document content with sections
+            let documentContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<w:body>`;
+
+            // Section 1: Cover Page (no page numbers)
+            documentContent += `
+<w:p>
+<w:pPr>
+<w:jc w:val="center"/>
+<w:spacing w:before="2000" w:after="2000"/>
+</w:pPr>
+<w:r><w:rPr><w:b/><w:sz w:val="48"/></w:rPr><w:t>${pageLabel}</w:t></w:r>
+</w:p>
+<w:p>
+<w:pPr>
+<w:sectPr>
+<w:pgSz w:w="${pageWidth}" w:h="${pageHeight}"/>
+<w:pgMar w:top="${finalMarginTop}" w:right="${useGutters ? finalOddPageRight : finalOddPageRight}" w:bottom="${finalMarginBottom}" w:left="${useGutters ? finalOddPageLeft : finalOddPageLeft}" w:header="720" w:footer="720" w:gutter="0"/>
+<w:titlePg/>
+</w:sectPr>
+</w:pPr>
+</w:p>`;
+
+            // Section 2: Front Matter
+            documentContent += `
+<w:p><w:r><w:t></w:t></w:r></w:p>
+<w:p>
+<w:pPr><w:jc w:val="center"/><w:spacing w:before="2000" w:after="1000"/></w:pPr>
+<w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>Table of Contents</w:t></w:r>
+</w:p>
+<w:p><w:r><w:t></w:t></w:r></w:p>
+<w:p>
+<w:pPr><w:pageBreakBefore/><w:jc w:val="center"/><w:spacing w:before="2000" w:after="1000"/></w:pPr>
+<w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>Dedication</w:t></w:r>
+</w:p>
+<w:p>
+<w:pPr><w:jc w:val="center"/></w:pPr>
+<w:r><w:t>https://srives.github.io/reMarkable/</w:t></w:r>
+</w:p>
+<w:p>
+<w:pPr>
+<w:sectPr>
+<w:pgSz w:w="${pageWidth}" w:h="${pageHeight}"/>
+<w:pgMar w:top="${finalMarginTop}" w:right="${useGutters ? finalEvenPageRight : finalEvenPageRight}" w:bottom="${finalMarginBottom}" w:left="${useGutters ? finalEvenPageLeft : finalEvenPageLeft}" w:header="720" w:footer="720" w:gutter="0"/>
+</w:sectPr>
+</w:pPr>
+</w:p>`;
+
+            // Section 3: Content with page numbers
+            documentContent += `
+<w:p>
+<w:pPr><w:pageBreakBefore/><w:spacing w:before="2000" w:after="1000"/></w:pPr>
+<w:r><w:rPr><w:b/><w:sz w:val="32"/></w:rPr><w:t>Chapter 1</w:t></w:r>
+</w:p>
+<w:p>
+<w:r><w:t>Your content goes here. This is an odd page with the appropriate margins set.</w:t></w:r>
+</w:p>`;
+
+            if (useGutters) {
+                documentContent += `
+<w:p>
+<w:pPr><w:pageBreakBefore/></w:pPr>
+<w:r><w:t>Continued content on even page...</w:t></w:r>
+</w:p>`;
+            }
+
+            // Final section properties with page numbers and odd/even margins
+            documentContent += `
+<w:sectPr>
+<w:footerReference w:type="default" r:id="rId3"/>
+<w:pgSz w:w="${pageWidth}" w:h="${pageHeight}"/>
+<w:pgMar w:top="${finalMarginTop}" w:right="${useGutters ? finalOddPageRight : finalOddPageRight}" w:bottom="${finalMarginBottom}" w:left="${useGutters ? finalOddPageLeft : finalOddPageLeft}" w:header="720" w:footer="720" w:gutter="0"/>
+<w:pgNumType w:start="1"/>
+${useGutters ? '<w:rtlGutter/>' : ''}
+</w:sectPr>
+</w:body>
+</w:document>`;
+
+            zip.file('word/document.xml', documentContent);
+
+            // word/styles.xml
+            zip.file('word/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults>
+<w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:sz w:val="24"/></w:rPr></w:rPrDefault>
+</w:docDefaults>
+</w:styles>`);
+
+            // word/settings.xml with even/odd pages setting
+            zip.file('word/settings.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+${useGutters ? '<w:evenAndOddHeaders/>' : ''}
+<w:defaultTabStop w:val="720"/>
+</w:settings>`);
+
+            // word/footer1.xml
+            zip.file('word/footer1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:p>
+<w:pPr><w:jc w:val="center"/></w:pPr>
+<w:r><w:fldChar w:fldCharType="begin"/></w:r>
+<w:r><w:instrText> PAGE </w:instrText></w:r>
+<w:r><w:fldChar w:fldCharType="end"/></w:r>
+</w:p>
+</w:ftr>`);
+
+            // Generate and save
+            const blob = await zip.generateAsync({type: 'blob'});
+            saveAs(blob, filename);
+        }
+
         window.savePDF = savePDF;
         window.saveSVG = saveSVG;
         window.savePNG = savePNG;
+        window.saveMSWord = saveMSWord;
         
         function generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType, isScaled, pageWidthInInches, pageHeightInInches) {
             gridSvg.innerHTML = '';
