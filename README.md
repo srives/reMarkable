@@ -4,7 +4,7 @@ to help you stay within certain margins.
 
 View the website here:
 
-                   [Rive's reMarkable Template Builder](https://srives.github.io/reMarkable/)
+https://srives.github.io/reMarkable/
 
 This site was first created to help me on my Growth Calculus. One downside (currently) is that
 to get a privately generated template loaded onto your tablet requires a third part tool. I hope
