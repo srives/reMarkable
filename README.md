@@ -1,11 +1,14 @@
 You can use your reMarkable 1, reMarkable 2, reMarkable Pro, or Paper Pro Move to write a book.
 Pick the size of book you want, and the publisher you wish to use, then you can create a template
-to help you with margins.
+to help you stay within certain margins.
 
 View the website here:
 
-                   https://srives.github.io/reMarkable/
+                   [Rive's reMarkable Template Builder](https://srives.github.io/reMarkable/)
 
-This site was created as work to help me on my Growth Calculus. One downside (currently) is that
+This site was first created to help me on my Growth Calculus. One downside (currently) is that
 to get a privately generated template loaded onto your tablet requires a third part tool. I hope
 the reMarkable team will provide this feature in their software soon.
+
+reMarkable's generally need a SVG or PNG output. But you can also have a PDF and use it as 
+a workbook. 
