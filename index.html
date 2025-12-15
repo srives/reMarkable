@@ -84,6 +84,31 @@
             pointer-events: none;
             z-index: 2;
         }
+
+        .gutter-margin {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .margin-text {
+            position: absolute;
+            font-family: Arial, sans-serif;
+            color: rgba(100, 100, 100, 0.4);
+            font-size: 11px;
+            font-weight: normal;
+            pointer-events: none;
+            z-index: 5;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .margin-text.vertical {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+        }
         
         .url-text {
             position: absolute;
@@ -270,6 +295,14 @@
                 display: none;
             }
 
+            #togglePageBtn {
+                display: none;
+            }
+
+            #pageTypeLabel {
+                display: none;
+            }
+
             .template-container {
                 box-shadow: none;
                 margin: 0;
@@ -323,6 +356,18 @@
                 <option value="no">No</option>
             </select>
 
+            <label for="centeringMarginColor" id="centeringMarginColorLabel" style="margin-left: 10px;">Page Centering Margin Color:</label>
+            <select id="centeringMarginColor" style="padding: 4px;">
+                <option value="rgba(0, 0, 0, 0.15)" style="color: rgba(0, 0, 0, 0.7);">Dark Gray</option>
+                <option value="rgba(128, 128, 128, 0.15)" style="color: rgba(128, 128, 128, 0.7);">Medium Gray</option>
+                <option value="rgba(200, 200, 200, 0.15)" style="color: rgba(200, 200, 200, 0.7);">Light Gray</option>
+                <option value="rgba(173, 216, 230, 0.2)" style="color: rgb(100, 180, 220);">Light Blue</option>
+                <option value="rgba(100, 149, 237, 0.2)" style="color: rgb(100, 149, 237);">Medium Blue</option>
+                <option value="rgba(255, 182, 193, 0.2)" style="color: rgb(255, 100, 150);">Light Pink</option>
+                <option value="rgba(255, 255, 200, 0.2)" style="color: rgb(200, 200, 100);">Light Yellow</option>
+                <option value="rgba(144, 238, 144, 0.2)" style="color: rgb(100, 200, 100);">Light Green</option>
+            </select>
+
             <label for="pageSize" style="margin-left: 20px;">Page Size:</label>
             <select id="pageSize">
                 <option value="1620,2160">Full reMarkable Pro (7.07" × 9.43")</option>
@@ -338,7 +383,7 @@
                 <option value="wireo">Wire-O Binding</option>
                 <option value="case">Case Binding (Hardcover)</option>
             </select>
-            
+
             <label for="platform" style="margin-left: 20px;">Publisher/Platform:</label>
             <select id="platform">
                 <option value="general">General Publishing</option>
@@ -351,7 +396,12 @@
                 <option value="bookbaby">BookBaby</option>
                 <option value="canva">Canva Print</option>
             </select>
-            
+
+            <label for="showMarginTexts" style="margin-left: 20px;">
+                <input type="checkbox" id="showMarginTexts">
+                Show Margin Texts
+            </label>
+
             <button onclick="applyRecommendedMargins()" style="margin-left: 20px; padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background: #28a745; color: white; cursor: pointer;">Apply Margin Recommendations</button>
         </div>
         
@@ -533,7 +583,33 @@
 
             <span id="usableArea" style="margin-left: 20px; font-weight: bold; color: #007bff;"></span>
         </div>
-        
+
+        <div style="margin-bottom: 10px;">
+            <input type="checkbox" id="useGutterMargins">
+            <label for="useGutterMargins">Use Gutter Margins</label>
+
+            <label for="gutterLeft" style="margin-left: 20px;">Left Side (Odd Page):</label>
+            <select id="gutterLeft">
+            </select>
+
+            <label for="gutterRight" style="margin-left: 10px;">Right Side (Even Page):</label>
+            <select id="gutterRight">
+            </select>
+
+            <label for="gutterColor" style="margin-left: 10px;">Gutter Color:</label>
+            <select id="gutterColor" style="padding: 4px;">
+                <option value="rgba(173, 216, 230, 0.4)" style="color: rgb(100, 180, 220);">Light Blue</option>
+                <option value="rgba(100, 149, 237, 0.4)" style="color: rgb(100, 149, 237);">Medium Blue</option>
+                <option value="rgba(65, 105, 225, 0.4)" style="color: rgb(65, 105, 225);">Dark Blue</option>
+                <option value="rgba(255, 255, 200, 0.4)" style="color: rgb(200, 200, 100);">Light Yellow</option>
+                <option value="rgba(255, 255, 100, 0.4)" style="color: rgb(200, 200, 50);">Medium Yellow</option>
+                <option value="rgba(218, 165, 32, 0.4)" style="color: rgb(218, 165, 32);">Dark Yellow</option>
+                <option value="rgba(144, 238, 144, 0.4)" style="color: rgb(100, 200, 100);">Light Green</option>
+                <option value="rgba(60, 179, 113, 0.4)" style="color: rgb(60, 179, 113);">Medium Green</option>
+                <option value="rgba(34, 139, 34, 0.4)" style="color: rgb(34, 139, 34);">Dark Green</option>
+            </select>
+        </div>
+
         <div>
             <label for="templateType">Template Type:</label>
             <select id="templateType">
@@ -594,7 +670,7 @@
             <label for="showMarginDimensions" style="margin-left: 20px;">Show Wd × Ht:</label>
             <input type="checkbox" id="showMarginDimensions">
 
-            <span id="rulerSizeLabel" style="margin-left: 20px; font-size: 11px; color: #666;">Text Size 7</span>
+            <span id="rulerSizeLabel" style="margin-left: 20px; font-size: 11px; color: #666;">Text Size 10</span>
             <button onclick="decreaseRulerSize()" style="margin-left: 5px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">−</button>
             <button onclick="increaseRulerSize()" style="margin-left: 5px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">+</button>
         </div>
@@ -633,19 +709,31 @@
 
     <hr class="page-separator" style="margin: 20px 0; border: none; border-top: 2px solid #ccc;">
 
-    <h3 class="page-subtitle" style="text-align: center; color: #555; margin: 15px 0; font-weight: normal; font-style: italic;">Page as seen on your reMarkable</h3>
+    <h3 class="page-subtitle" style="text-align: center; color: #555; margin: 15px 0; font-weight: normal; font-style: italic;">
+        Page as seen on your reMarkable
+        <span id="pageTypeLabel" style="font-size: 14px; margin-left: 10px; color: #777;">(Showing Odd Page)</span>
+        <button id="togglePageBtn" onclick="togglePage()" style="margin-left: 10px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">→</button>
+    </h3>
 
     <div class="template-container">
         <div id="templatePage" class="template-page">
             <div id="borderOverlay" class="border-overlay"></div>
             <div id="marginLabelTop" class="margin-label-top"></div>
             <div id="marginLabelRight" class="margin-label-right"></div>
+            <!-- Margin text labels -->
+            <div id="centeringMarginTextTop" class="margin-text">Device Centering Margins</div>
+            <div id="gutterMarginText" class="margin-text vertical">Gutter Margins</div>
+            <div id="contentMarginTextTop" class="margin-text">Content Margins</div>
+            <div id="contentMarginTextBottom" class="margin-text">Content Margins</div>
+            <div id="contentMarginTextLeft" class="margin-text vertical">Content Margins</div>
+            <div id="contentMarginTextRight" class="margin-text vertical">Content Margins</div>
             <div id="contentArea" class="content-area grid">
                 <svg id="gridSvg" class="grid-svg"></svg>
                 <div id="urlText" class="url-text">https://srives.github.io/reMarkable/</div>
                 <div id="rulerLeft" class="ruler-left"></div>
                 <div id="rulerBottom" class="ruler-bottom"></div>
                 <div id="marginLines" class="margin-lines"></div>
+                <div id="gutterMargin" class="gutter-margin"></div>
             </div>
         </div>
     </div>
@@ -683,8 +771,24 @@
         const marginLabelRight = document.getElementById('marginLabelRight');
         const debugInfo = document.getElementById('debugInfo');
         const pdfPageCount = document.getElementById('pdfPageCount');
+        const useGutterMarginsCheckbox = document.getElementById('useGutterMargins');
+        const gutterLeftSelect = document.getElementById('gutterLeft');
+        const gutterRightSelect = document.getElementById('gutterRight');
+        const gutterColorSelect = document.getElementById('gutterColor');
+        const gutterMargin = document.getElementById('gutterMargin');
+        const pageTypeLabel = document.getElementById('pageTypeLabel');
+        const showMarginTextsCheckbox = document.getElementById('showMarginTexts');
+        const centeringMarginTextTop = document.getElementById('centeringMarginTextTop');
+        const gutterMarginText = document.getElementById('gutterMarginText');
+        const contentMarginTextTop = document.getElementById('contentMarginTextTop');
+        const contentMarginTextBottom = document.getElementById('contentMarginTextBottom');
+        const contentMarginTextLeft = document.getElementById('contentMarginTextLeft');
+        const contentMarginTextRight = document.getElementById('contentMarginTextRight');
+        const centeringMarginColorSelect = document.getElementById('centeringMarginColor');
+        const centeringMarginColorLabel = document.getElementById('centeringMarginColorLabel');
 
-        let rulerFontSize = 7; // Default ruler text size
+        let rulerFontSize = 10; // Default ruler text size
+        let isOddPage = true; // Track whether we're showing odd or even page
 
         const devices = {
             rm2: {
@@ -792,6 +896,7 @@
             binding: {
                 perfect: {
                     name: "Perfect Binding",
+                    gutterInches: 0.375, // Minimum gutter for perfect binding
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
@@ -804,6 +909,7 @@
                 },
                 saddle: {
                     name: "Saddle Stitch",
+                    gutterInches: 0.0, // Saddle stitch doesn't need additional gutter
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
@@ -816,6 +922,7 @@
                 },
                 spiral: {
                     name: "Spiral/Coil Binding",
+                    gutterInches: 0.625, // Spiral needs space for punch holes
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
@@ -828,6 +935,7 @@
                 },
                 wireo: {
                     name: "Wire-O Binding",
+                    gutterInches: 0.75, // Wire-O needs space for square holes
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
@@ -840,6 +948,7 @@
                 },
                 case: {
                     name: "Case Binding (Hardcover)",
+                    gutterInches: 0.75, // Case binding needs larger gutter (0.75"-1.0")
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (!margins) return "Not found";
@@ -856,6 +965,7 @@
             platform: {
                 general: {
                     name: "General Publishing",
+                    gutterInches: null, // No specific gutter, fall back to binding type
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
@@ -866,36 +976,40 @@
                 },
                 kdp: {
                     name: "Amazon KDP",
+                    gutterInches: 0.125, // KDP includes gutter in inside margin, use moderate value
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". KDP requires minimum 0.375\" all sides (safe zone). Gutter margin increases with page count: 0.5\" for thin books, 0.75\"-1\" for 200+ pages.`;
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". KDP requires minimum 0.375\" all sides (safe zone). <strong>Gutter:</strong> KDP includes gutter in the inside margin - use 0.5\" total inside for <24 pages, 0.625\" for 24-150 pages, 0.75\" for 151-300 pages, 0.875\" for 301-500 pages, 1.0\" for 501-800 pages.`;
                         }
-                        return "Minimum 0.375\" safe zone all sides. Recommended: 0.5\" outside margins, gutter 0.8\"-1\" for 150-400 pages.";
+                        return "Minimum 0.375\" safe zone all sides. Gutter included in inside margin: 0.5\" total for thin books, 0.75\"-1\" for 200+ pages.";
                     }
                 },
                 ingram: {
                     name: "IngramSpark",
+                    gutterInches: 0.125, // IngramSpark recommends 0.125" additional gutter
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". IngramSpark requires minimum 0.5\" all sides, with text at least 0.25\" from trim line. Add 0.125\" to gutter for every 100 pages.`;
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". IngramSpark requires minimum 0.5\" all sides, with text at least 0.25\" from trim line. <strong>Gutter:</strong> Add 0.125\" (3mm) white strip on bind side for perfect bound/hardcover books, in addition to the 0.5\" margin. Total inside: 0.625\" minimum.`;
                         }
-                        return "Minimum 0.5\" all sides required. Text must be 0.25\" from trim. Inside 0.625\"-0.75\", Outside 0.5\", Top 0.5\", Bottom 0.625\".";
+                        return "Minimum 0.5\" all sides required. Text must be 0.25\" from trim. Gutter: 0.125\" additional on bind side for perfect/hardcover.";
                     }
                 },
                 lulu: {
                     name: "Lulu",
+                    gutterInches: 0.25, // Lulu recommends 0.2"-0.3", using middle value
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
-                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Lulu requires 0.5\" safety margin all sides, with gutter of 0.2\"-0.3\" for binding.`;
+                            return `For this size: Top ${margins.top}\", Bottom ${margins.bottom}\", Left ${margins.left}\", Right ${margins.right}\". Lulu requires 0.5\" safety margin all sides. <strong>Gutter:</strong> 0.2\"-0.3\" for most bindings, 0.375\" (9mm) for coil-bound books (coils bite ~0.312\" into spine edge).`;
                         }
-                        return "Minimum 0.5\" safety margin all sides. Gutter: 0.2\"-0.3\". Inside 0.625\"-0.75\", Outside 0.5\", Top 0.5\", Bottom 0.625\".";
+                        return "Minimum 0.5\" safety margin all sides. Gutter: 0.2\"-0.3\" standard, 0.375\" for coil-bound. Total inside: 0.7\"-0.875\".";
                     }
                 },
                 bn: {
                     name: "Barnes & Noble Press",
+                    gutterInches: 0.125, // B&N Press uses standard gutter
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
@@ -906,6 +1020,7 @@
                 },
                 d2d: {
                     name: "Draft2Digital",
+                    gutterInches: 0.125, // D2D follows KDP guidelines
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
@@ -916,6 +1031,7 @@
                 },
                 blurb: {
                     name: "Blurb",
+                    gutterInches: 0.125, // Blurb uses standard gutter
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
@@ -926,6 +1042,7 @@
                 },
                 bookbaby: {
                     name: "BookBaby",
+                    gutterInches: 0.125, // BookBaby uses standard gutter
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
@@ -936,6 +1053,7 @@
                 },
                 canva: {
                     name: "Canva Print",
+                    gutterInches: 0.3, // Canva recommends 0.3" for smyth sewn, 0.6" for perfect bound
                     getDesc: function(pageSize) {
                         const margins = defaultMarginsInches[pageSize];
                         if (margins) {
@@ -968,13 +1086,58 @@
                 <div><strong>${platform.name}:</strong> ${platformDesc}</div>
             `;
             marginRecommendation.style.display = 'block';
+
+            // Also update gutter values based on recommendations
+            updateRecommendedGutters();
+        }
+
+        function updateRecommendedGutters() {
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+            const gutterInches = getRecommendedGutter();
+            const gutterPx = Math.round(gutterInches * dpi * 100) / 100;
+
+            // Update gutter values for both odd and even pages
+            gutterLeftSelect.value = gutterPx;
+            gutterRightSelect.value = gutterPx;
         }
         
+        function getRecommendedGutter() {
+            const platform = marginRecommendations.platform[platformSelect.value];
+            const binding = marginRecommendations.binding[bindingTypeSelect.value];
+
+            // Try platform-specific gutter first
+            if (platform && platform.gutterInches !== null && platform.gutterInches !== undefined) {
+                return platform.gutterInches;
+            }
+
+            // Fall back to binding type gutter
+            if (binding && binding.gutterInches !== null && binding.gutterInches !== undefined) {
+                return binding.gutterInches;
+            }
+
+            // Default fallback
+            return 0.125;
+        }
+
         function applyRecommendedMargins() {
             applyDefaultMargins();
+
+            // Also apply recommended gutter margins
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+            const gutterInches = getRecommendedGutter();
+            const gutterPx = Math.round(gutterInches * dpi * 100) / 100;
+
+            // Set gutter values for both odd and even pages
+            gutterLeftSelect.value = gutterPx;
+            gutterRightSelect.value = gutterPx;
+
             updateTemplate();
         }
-        
+
         window.applyRecommendedMargins = applyRecommendedMargins;
 
         function resetMargins() {
@@ -983,6 +1146,50 @@
             marginLeftSelect.value = 0;
             marginRightSelect.value = 0;
             updateTemplate();
+        }
+
+        function togglePage() {
+            isOddPage = !isOddPage;
+            pageTypeLabel.textContent = isOddPage ? '(Showing Odd Page)' : '(Showing Even Page)';
+            updateTemplate();
+        }
+
+        window.togglePage = togglePage;
+
+        function updateGutterDropdowns() {
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+            const dpi = isScaled ? device.dpi : device.unscaledDpi;
+
+            const currentLeft = gutterLeftSelect.value;
+            const currentRight = gutterRightSelect.value;
+
+            const gutterSelects = [gutterLeftSelect, gutterRightSelect];
+
+            gutterSelects.forEach(select => {
+                select.innerHTML = '';
+
+                // Add option for no gutter
+                const noneOption = document.createElement('option');
+                noneOption.value = 0;
+                noneOption.textContent = '0"';
+                select.appendChild(noneOption);
+
+                // Use 0.025" increments to support values like 0.375", 0.625", 0.875"
+                for (let inches = 0.025; inches <= 1.5; inches += 0.025) {
+                    const pixels = Math.round(inches * dpi * 100) / 100;
+                    const option = document.createElement('option');
+                    option.value = pixels;
+                    // Format to 3 decimal places, remove trailing zeros
+                    option.textContent = inches.toFixed(3).replace(/\.?0+$/, '') + '"';
+                    select.appendChild(option);
+                }
+            });
+
+            // Set default gutter values (0.125" = ~28px for most devices)
+            const defaultGutterPx = Math.round(0.125 * dpi * 100) / 100;
+            gutterLeftSelect.value = currentLeft || defaultGutterPx;
+            gutterRightSelect.value = currentRight || defaultGutterPx;
         }
 
         function increaseRulerSize() {
@@ -1049,11 +1256,13 @@
             marginSelects.forEach(select => {
                 select.innerHTML = '';
 
-                for (let inches = 0; inches <= 1.5; inches += 0.05) {
+                // Use 0.025" increments to match gutter dropdown granularity
+                for (let inches = 0; inches <= 1.5; inches += 0.025) {
                     const pixels = Math.round(inches * dpi * 100) / 100;
                     const option = document.createElement('option');
                     option.value = pixels;
-                    option.textContent = inches.toFixed(2) + '"';
+                    // Format to 3 decimal places, remove trailing zeros
+                    option.textContent = inches.toFixed(3).replace(/\.?0+$/, '') + '"';
                     select.appendChild(option);
                 }
             });
@@ -1062,8 +1271,21 @@
             marginBottomSelect.value = currentBottom;
             marginLeftSelect.value = currentLeft;
             marginRightSelect.value = currentRight;
+
+            updateGutterDropdowns();
         }
         
+        function updateCenteringColorVisibility() {
+            const isScaled = scaleTypeSelect.value === 'yes';
+            if (isScaled) {
+                centeringMarginColorLabel.style.display = 'inline';
+                centeringMarginColorSelect.style.display = 'inline';
+            } else {
+                centeringMarginColorLabel.style.display = 'none';
+                centeringMarginColorSelect.style.display = 'none';
+            }
+        }
+
         function updatePageSizes() {
             const device = devices[deviceTypeSelect.value];
             const currentValue = pageSizeSelect.value;
@@ -1132,9 +1354,10 @@
             }
 
             applyDefaultMargins();
+            updateCenteringColorVisibility();
             updateTemplate();
         }
-        
+
         function updatePrintPageSize(width, height) {
             const existingStyle = document.getElementById('dynamic-print-style');
             if (existingStyle) {
@@ -1162,6 +1385,46 @@
             document.head.appendChild(style);
         }
         
+        function applyGutterToPage(pageElement, pageNumber) {
+            if (!useGutterMarginsCheckbox.checked) {
+                return;
+            }
+
+            const gutterLeft = parseFloat(gutterLeftSelect.value);
+            const gutterRight = parseFloat(gutterRightSelect.value);
+            const gutterColor = gutterColorSelect.value;
+
+            const gutterMarginEl = pageElement.querySelector('.gutter-margin');
+            const marginLinesEl = pageElement.querySelector('.margin-lines');
+
+            if (!gutterMarginEl || !marginLinesEl) return;
+
+            const isPageOdd = (pageNumber % 2 === 1);
+            const gutterWidth = isPageOdd ? gutterLeft : gutterRight;
+
+            if (gutterWidth > 0) {
+                gutterMarginEl.style.display = 'block';
+                gutterMarginEl.style.width = gutterWidth + 'px';
+                gutterMarginEl.style.backgroundColor = gutterColor;
+
+                if (isPageOdd) {
+                    // Odd pages: gutter on left side
+                    gutterMarginEl.style.left = '0px';
+                    gutterMarginEl.style.right = 'auto';
+                    marginLinesEl.style.left = gutterWidth + 'px';
+                    marginLinesEl.style.right = '0px';
+                } else {
+                    // Even pages: gutter on right side
+                    gutterMarginEl.style.left = 'auto';
+                    gutterMarginEl.style.right = '0px';
+                    marginLinesEl.style.left = '0px';
+                    marginLinesEl.style.right = gutterWidth + 'px';
+                }
+            } else {
+                gutterMarginEl.style.display = 'none';
+            }
+        }
+
         function savePDF() {
             const selectedOption = pageSizeSelect.options[pageSizeSelect.selectedIndex];
             const pageLabel = selectedOption.textContent.trim();
@@ -1178,12 +1441,23 @@
             const pageCount = parseInt(pdfPageCount.value);
             const clonedPages = [];
 
+            // Apply gutter to the first page (page 1 = odd)
+            if (useGutterMarginsCheckbox.checked) {
+                applyGutterToPage(templatePage, 1);
+            }
+
             // Clone the template page (pageCount - 1) times and insert after the original
             if (pageCount > 1) {
                 const container = templatePage.parentElement;
                 for (let i = 1; i < pageCount; i++) {
                     const clone = templatePage.cloneNode(true);
                     clone.id = 'templatePage_clone_' + i;
+
+                    // Apply appropriate gutter for this page number (i+1 because page 1 is the original)
+                    if (useGutterMarginsCheckbox.checked) {
+                        applyGutterToPage(clone, i + 1);
+                    }
+
                     container.appendChild(clone);
                     clonedPages.push(clone);
                 }
@@ -1195,6 +1469,8 @@
                 document.title = originalTitle;
                 // Remove cloned pages after printing
                 clonedPages.forEach(clone => clone.remove());
+                // Restore the original page to current odd/even state
+                updateTemplate();
             }, 1000);
         }
 
@@ -1229,11 +1505,12 @@
 
             // Add gray centering margins if scaled
             if (offsetX > 0 || offsetY > 0) {
+                const centeringColor = centeringMarginColorSelect.value;
                 svgContent += `    <!-- Gray centering margins -->
-    <rect x="0" y="0" width="${offsetX}" height="${pageHeight}" fill="rgba(0,0,0,0.15)"/>
-    <rect x="${pageWidth - offsetX}" y="0" width="${offsetX}" height="${pageHeight}" fill="rgba(0,0,0,0.15)"/>
-    <rect x="0" y="0" width="${pageWidth}" height="${offsetY}" fill="rgba(0,0,0,0.15)"/>
-    <rect x="0" y="${pageHeight - offsetY}" width="${pageWidth}" height="${offsetY}" fill="rgba(0,0,0,0.15)"/>
+    <rect x="0" y="0" width="${offsetX}" height="${pageHeight}" fill="${centeringColor}"/>
+    <rect x="${pageWidth - offsetX}" y="0" width="${offsetX}" height="${pageHeight}" fill="${centeringColor}"/>
+    <rect x="0" y="0" width="${pageWidth}" height="${offsetY}" fill="${centeringColor}"/>
+    <rect x="0" y="${pageHeight - offsetY}" width="${pageWidth}" height="${offsetY}" fill="${centeringColor}"/>
 `;
             }
 
@@ -1257,7 +1534,35 @@ ${gridSvgContent}
 `;
             }
 
-            // Add filled margin areas if present
+            // Calculate gutter for cumulative display
+            let activeGutterLeft = 0;
+            let activeGutterRight = 0;
+
+            // Add gutter margins first (at the edge)
+            if (useGutterMarginsCheckbox.checked) {
+                const gutterLeft = parseFloat(gutterLeftSelect.value);
+                const gutterRight = parseFloat(gutterRightSelect.value);
+                const gutterColor = gutterColorSelect.value;
+                const gutterWidth = isOddPage ? gutterLeft : gutterRight;
+
+                if (gutterWidth > 0) {
+                    svgContent += `    <!-- Gutter margin -->
+`;
+                    if (isOddPage) {
+                        // Odd pages: gutter on left side
+                        svgContent += `    <rect x="${contentX}" y="${contentY}" width="${gutterWidth}" height="${contentHeight}" fill="${gutterColor}"/>
+`;
+                        activeGutterLeft = gutterWidth;
+                    } else {
+                        // Even pages: gutter on right side
+                        svgContent += `    <rect x="${contentX + contentWidth - gutterWidth}" y="${contentY}" width="${gutterWidth}" height="${contentHeight}" fill="${gutterColor}"/>
+`;
+                        activeGutterRight = gutterWidth;
+                    }
+                }
+            }
+
+            // Add filled margin areas (cumulative, after gutter)
             const marginTop = parseFloat(marginTopSelect.value);
             const marginBottom = parseFloat(marginBottomSelect.value);
             const marginLeft = parseFloat(marginLeftSelect.value);
@@ -1266,23 +1571,27 @@ ${gridSvgContent}
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
                 const marginColor = marginColorSelect.value;
 
-                svgContent += `    <!-- Margin areas -->
+                svgContent += `    <!-- Margin areas (cumulative with gutter) -->
 `;
+                // Adjust margin positions to account for gutter
+                const marginContentX = contentX + activeGutterLeft;
+                const marginContentWidth = contentWidth - activeGutterLeft - activeGutterRight;
+
                 // Draw filled margin rectangles
                 if (marginTop > 0) {
-                    svgContent += `    <rect x="${contentX}" y="${contentY}" width="${contentWidth}" height="${marginTop}" fill="${marginColor}"/>
+                    svgContent += `    <rect x="${marginContentX}" y="${contentY}" width="${marginContentWidth}" height="${marginTop}" fill="${marginColor}"/>
 `;
                 }
                 if (marginBottom > 0) {
-                    svgContent += `    <rect x="${contentX}" y="${contentY + contentHeight - marginBottom}" width="${contentWidth}" height="${marginBottom}" fill="${marginColor}"/>
+                    svgContent += `    <rect x="${marginContentX}" y="${contentY + contentHeight - marginBottom}" width="${marginContentWidth}" height="${marginBottom}" fill="${marginColor}"/>
 `;
                 }
                 if (marginLeft > 0) {
-                    svgContent += `    <rect x="${contentX}" y="${contentY}" width="${marginLeft}" height="${contentHeight}" fill="${marginColor}"/>
+                    svgContent += `    <rect x="${marginContentX}" y="${contentY}" width="${marginLeft}" height="${contentHeight}" fill="${marginColor}"/>
 `;
                 }
                 if (marginRight > 0) {
-                    svgContent += `    <rect x="${contentX + contentWidth - marginRight}" y="${contentY}" width="${marginRight}" height="${contentHeight}" fill="${marginColor}"/>
+                    svgContent += `    <rect x="${marginContentX + marginContentWidth - marginRight}" y="${contentY}" width="${marginRight}" height="${contentHeight}" fill="${marginColor}"/>
 `;
                 }
             }
@@ -1378,6 +1687,53 @@ ${gridSvgContent}
 `;
             }
 
+            // Add margin text labels if enabled
+            if (showMarginTextsCheckbox.checked) {
+                svgContent += `    <!-- Margin text labels -->
+`;
+                const marginContentX = contentX + activeGutterLeft;
+                const marginContentWidth = contentWidth - activeGutterLeft - activeGutterRight;
+
+                // 1. Device Centering Margins (top) - horizontal text
+                if (offsetY > 20) {
+                    svgContent += `    <text x="${pageWidth / 2}" y="${offsetY / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.3)" text-anchor="middle" dominant-baseline="middle">Device Centering Margins</text>
+`;
+                }
+
+                // 2. Gutter Margins
+                if (activeGutterLeft > 20) {
+                    svgContent += `    <text x="${contentX + activeGutterLeft / 2}" y="${contentY + contentHeight / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.4)" text-anchor="middle" dominant-baseline="middle" writing-mode="tb" transform="rotate(180 ${contentX + activeGutterLeft / 2} ${contentY + contentHeight / 2})">Gutter Margins</text>
+`;
+                } else if (activeGutterRight > 20) {
+                    svgContent += `    <text x="${contentX + contentWidth - activeGutterRight / 2}" y="${contentY + contentHeight / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.4)" text-anchor="middle" dominant-baseline="middle" writing-mode="tb" transform="rotate(180 ${contentX + contentWidth - activeGutterRight / 2} ${contentY + contentHeight / 2})">Gutter Margins</text>
+`;
+                }
+
+                // 3. Content Margins - Top
+                if (marginTop > 20) {
+                    svgContent += `    <text x="${marginContentX + marginContentWidth / 2}" y="${contentY + marginTop / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.4)" text-anchor="middle" dominant-baseline="middle">Content Margins</text>
+`;
+                }
+
+                // 4. Content Margins - Bottom
+                if (marginBottom > 20) {
+                    svgContent += `    <text x="${marginContentX + marginContentWidth / 2}" y="${contentY + contentHeight - marginBottom / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.4)" text-anchor="middle" dominant-baseline="middle">Content Margins</text>
+`;
+                }
+
+                // 5. Content Margins - Left
+                if (marginLeft > 20) {
+                    svgContent += `    <text x="${marginContentX + marginLeft / 2}" y="${contentY + contentHeight / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.4)" text-anchor="middle" dominant-baseline="middle" writing-mode="tb" transform="rotate(180 ${marginContentX + marginLeft / 2} ${contentY + contentHeight / 2})">Content Margins</text>
+`;
+                }
+
+                // 6. Content Margins - Right
+                if (marginRight > 20) {
+                    svgContent += `    <text x="${marginContentX + marginContentWidth - marginRight / 2}" y="${contentY + contentHeight / 2}" font-family="Arial" font-size="11" fill="rgba(100, 100, 100, 0.4)" text-anchor="middle" dominant-baseline="middle" writing-mode="tb" transform="rotate(180 ${marginContentX + marginContentWidth - marginRight / 2} ${contentY + contentHeight / 2})">Content Margins</text>
+`;
+                }
+            }
+
             svgContent += `</svg>`;
 
             // Download SVG
@@ -1427,7 +1783,7 @@ ${gridSvgContent}
 
             // Draw gray centering margins if scaled
             if (offsetX > 0 || offsetY > 0) {
-                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.fillStyle = centeringMarginColorSelect.value;
                 ctx.fillRect(0, 0, offsetX, pageHeight); // Left
                 ctx.fillRect(pageWidth - offsetX, 0, offsetX, pageHeight); // Right
                 ctx.fillRect(0, 0, pageWidth, offsetY); // Top
@@ -1453,7 +1809,31 @@ ${gridSvgContent}
                 // Draw grid
                 ctx.drawImage(img, contentX, contentY, contentWidth, contentHeight);
 
-                // Draw filled margin areas if present
+                // Calculate gutter for cumulative display
+                let activeGutterLeft = 0;
+                let activeGutterRight = 0;
+
+                // Draw gutter margins first (at the edge)
+                if (useGutterMarginsCheckbox.checked) {
+                    const gutterLeft = parseFloat(gutterLeftSelect.value);
+                    const gutterRight = parseFloat(gutterRightSelect.value);
+                    const gutterWidth = isOddPage ? gutterLeft : gutterRight;
+
+                    if (gutterWidth > 0) {
+                        ctx.fillStyle = gutterColorSelect.value;
+                        if (isOddPage) {
+                            // Odd pages: gutter on left side
+                            ctx.fillRect(contentX, contentY, gutterWidth, contentHeight);
+                            activeGutterLeft = gutterWidth;
+                        } else {
+                            // Even pages: gutter on right side
+                            ctx.fillRect(contentX + contentWidth - gutterWidth, contentY, gutterWidth, contentHeight);
+                            activeGutterRight = gutterWidth;
+                        }
+                    }
+                }
+
+                // Draw filled margin areas (cumulative, after gutter)
                 const marginTop = parseFloat(marginTopSelect.value);
                 const marginBottom = parseFloat(marginBottomSelect.value);
                 const marginLeft = parseFloat(marginLeftSelect.value);
@@ -1462,17 +1842,21 @@ ${gridSvgContent}
                 if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
                     ctx.fillStyle = marginColorSelect.value;
 
+                    // Adjust margin positions to account for gutter
+                    const marginContentX = contentX + activeGutterLeft;
+                    const marginContentWidth = contentWidth - activeGutterLeft - activeGutterRight;
+
                     if (marginTop > 0) {
-                        ctx.fillRect(contentX, contentY, contentWidth, marginTop);
+                        ctx.fillRect(marginContentX, contentY, marginContentWidth, marginTop);
                     }
                     if (marginBottom > 0) {
-                        ctx.fillRect(contentX, contentY + contentHeight - marginBottom, contentWidth, marginBottom);
+                        ctx.fillRect(marginContentX, contentY + contentHeight - marginBottom, marginContentWidth, marginBottom);
                     }
                     if (marginLeft > 0) {
-                        ctx.fillRect(contentX, contentY, marginLeft, contentHeight);
+                        ctx.fillRect(marginContentX, contentY, marginLeft, contentHeight);
                     }
                     if (marginRight > 0) {
-                        ctx.fillRect(contentX + contentWidth - marginRight, contentY, marginRight, contentHeight);
+                        ctx.fillRect(marginContentX + marginContentWidth - marginRight, contentY, marginRight, contentHeight);
                     }
                 }
 
@@ -1577,6 +1961,78 @@ ${gridSvgContent}
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'top';
                     ctx.fillText('https://srives.github.io/reMarkable/', contentX + contentWidth / 2, contentY + 5);
+                }
+
+                // Add margin text labels if enabled
+                if (showMarginTextsCheckbox.checked) {
+                    ctx.font = '11px Arial';
+                    const marginContentX = contentX + activeGutterLeft;
+                    const marginContentWidth = contentWidth - activeGutterLeft - activeGutterRight;
+
+                    // 1. Device Centering Margins (top) - horizontal text
+                    if (offsetY > 20) {
+                        ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Device Centering Margins', pageWidth / 2, offsetY / 2);
+                    }
+
+                    ctx.fillStyle = 'rgba(100, 100, 100, 0.4)';
+
+                    // 2. Gutter Margins
+                    if (activeGutterLeft > 20) {
+                        ctx.save();
+                        ctx.translate(contentX + activeGutterLeft / 2, contentY + contentHeight / 2);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Gutter Margins', 0, 0);
+                        ctx.restore();
+                    } else if (activeGutterRight > 20) {
+                        ctx.save();
+                        ctx.translate(contentX + contentWidth - activeGutterRight / 2, contentY + contentHeight / 2);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Gutter Margins', 0, 0);
+                        ctx.restore();
+                    }
+
+                    // 3. Content Margins - Top
+                    if (marginTop > 20) {
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Content Margins', marginContentX + marginContentWidth / 2, contentY + marginTop / 2);
+                    }
+
+                    // 4. Content Margins - Bottom
+                    if (marginBottom > 20) {
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Content Margins', marginContentX + marginContentWidth / 2, contentY + contentHeight - marginBottom / 2);
+                    }
+
+                    // 5. Content Margins - Left
+                    if (marginLeft > 20) {
+                        ctx.save();
+                        ctx.translate(marginContentX + marginLeft / 2, contentY + contentHeight / 2);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Content Margins', 0, 0);
+                        ctx.restore();
+                    }
+
+                    // 6. Content Margins - Right
+                    if (marginRight > 20) {
+                        ctx.save();
+                        ctx.translate(marginContentX + marginContentWidth - marginRight / 2, contentY + contentHeight / 2);
+                        ctx.rotate(-Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Content Margins', 0, 0);
+                        ctx.restore();
+                    }
                 }
 
                 // Convert canvas to PNG and download
@@ -1975,11 +2431,12 @@ ${gridSvgContent}
 
             // Gray centering margins (only when scaled and page size < device size)
             if (offsetX > 0 || offsetY > 0) {
+                const centeringColor = centeringMarginColorSelect.value;
                 borderOverlay.style.boxShadow = `
-                    inset ${offsetX}px 0 0 rgba(0,0,0,0.15),
-                    inset -${offsetX}px 0 0 rgba(0,0,0,0.15),
-                    inset 0 ${offsetY}px 0 rgba(0,0,0,0.15),
-                    inset 0 -${offsetY}px 0 rgba(0,0,0,0.15)
+                    inset ${offsetX}px 0 0 ${centeringColor},
+                    inset -${offsetX}px 0 0 ${centeringColor},
+                    inset 0 ${offsetY}px 0 ${centeringColor},
+                    inset 0 -${offsetY}px 0 ${centeringColor}
                 `;
             } else {
                 borderOverlay.style.boxShadow = 'none';
@@ -2035,10 +2492,49 @@ ${gridSvgContent}
                 generateGridSvg(pageWidth, pageHeight, gridSize, overlayMultiplier, templateType, isScaled, pageWidthInInches, pageHeightInInches);
             }
 
-            // User-specified pinkish margins (borders on marginLines element)
-            // marginLines fills contentArea using the CSS top/left/right/bottom: 0
-            // Don't set width/height as that conflicts with right/bottom and causes overflow
+            // Calculate gutter width for cumulative margins
+            let activeGutterLeft = 0;
+            let activeGutterRight = 0;
+
+            // Gutter margins (additional margin for binding side)
+            if (useGutterMarginsCheckbox.checked) {
+                const gutterLeft = parseFloat(gutterLeftSelect.value);
+                const gutterRight = parseFloat(gutterRightSelect.value);
+                const gutterColor = gutterColorSelect.value;
+
+                // Show gutter based on page type
+                const gutterWidth = isOddPage ? gutterLeft : gutterRight;
+
+                if (gutterWidth > 0) {
+                    gutterMargin.style.display = 'block';
+                    gutterMargin.style.width = gutterWidth + 'px';
+                    gutterMargin.style.backgroundColor = gutterColor;
+
+                    if (isOddPage) {
+                        // Odd pages: gutter on left side
+                        gutterMargin.style.left = '0px';
+                        gutterMargin.style.right = 'auto';
+                        activeGutterLeft = gutterWidth;
+                    } else {
+                        // Even pages: gutter on right side
+                        gutterMargin.style.left = 'auto';
+                        gutterMargin.style.right = '0px';
+                        activeGutterRight = gutterWidth;
+                    }
+                } else {
+                    gutterMargin.style.display = 'none';
+                }
+            } else {
+                gutterMargin.style.display = 'none';
+            }
+
+            // User-specified margins (borders on marginLines element)
+            // Position marginLines to start AFTER the gutter (cumulative, not overlapping)
             marginLines.style.boxSizing = 'border-box';
+            marginLines.style.left = activeGutterLeft + 'px';
+            marginLines.style.right = activeGutterRight + 'px';
+            marginLines.style.top = '0px';
+            marginLines.style.bottom = '0px';
 
             if (marginTop > 0 || marginBottom > 0 || marginLeft > 0 || marginRight > 0) {
                 marginLines.style.borderTopWidth = marginTop + 'px';
@@ -2052,7 +2548,7 @@ ${gridSvgContent}
             } else {
                 marginLines.style.display = 'none';
             }
-            
+
             // Position URL text in the top margin area (relative to contentArea)
             if (marginTop >= 15) {
                 urlText.style.display = 'block';
@@ -2108,8 +2604,98 @@ ${gridSvgContent}
             updateRulers(offsetX, offsetY, selectedPageWidth, selectedPageHeight);
             updateUsableArea();
             updateDebugInfo();
+            updateMarginTexts(offsetX, offsetY, selectedPageWidth, selectedPageHeight, activeGutterLeft, activeGutterRight);
         }
-        
+
+        function updateMarginTexts(offsetX, offsetY, selectedPageWidth, selectedPageHeight, activeGutterLeft, activeGutterRight) {
+            const showTexts = showMarginTextsCheckbox.checked;
+            const device = devices[deviceTypeSelect.value];
+            const isScaled = scaleTypeSelect.value === 'yes';
+
+            if (!showTexts) {
+                // Hide all margin texts
+                centeringMarginTextTop.style.display = 'none';
+                gutterMarginText.style.display = 'none';
+                contentMarginTextTop.style.display = 'none';
+                contentMarginTextBottom.style.display = 'none';
+                contentMarginTextLeft.style.display = 'none';
+                contentMarginTextRight.style.display = 'none';
+                return;
+            }
+
+            const pageWidth = device.width;
+            const pageHeight = device.height;
+            const contentX = isScaled ? offsetX : 0;
+            const contentY = isScaled ? offsetY : 0;
+            const contentWidth = isScaled ? selectedPageWidth : pageWidth;
+            const contentHeight = isScaled ? selectedPageHeight : pageHeight;
+
+            const marginTop = parseFloat(marginTopSelect.value);
+            const marginBottom = parseFloat(marginBottomSelect.value);
+            const marginLeft = parseFloat(marginLeftSelect.value);
+            const marginRight = parseFloat(marginRightSelect.value);
+
+            // 1. Device Centering Margins (top) - horizontal text
+            if (offsetY > 20) {
+                centeringMarginTextTop.style.display = 'block';
+                centeringMarginTextTop.style.left = (pageWidth / 2) + 'px';
+                centeringMarginTextTop.style.top = (offsetY / 2) + 'px';
+                centeringMarginTextTop.style.transform = 'translate(-50%, -50%)';
+                centeringMarginTextTop.style.color = 'rgba(100, 100, 100, 0.3)';
+            } else {
+                centeringMarginTextTop.style.display = 'none';
+            }
+
+            // 2. Gutter Margins
+            if (useGutterMarginsCheckbox.checked && activeGutterLeft > 20) {
+                gutterMarginText.style.display = 'block';
+                gutterMarginText.style.left = contentX + (activeGutterLeft / 2) + 'px';
+                gutterMarginText.style.top = (contentY + contentHeight / 2) + 'px';
+            } else if (useGutterMarginsCheckbox.checked && activeGutterRight > 20) {
+                gutterMarginText.style.display = 'block';
+                gutterMarginText.style.left = (contentX + contentWidth - activeGutterRight / 2) + 'px';
+                gutterMarginText.style.top = (contentY + contentHeight / 2) + 'px';
+            } else {
+                gutterMarginText.style.display = 'none';
+            }
+
+            // 3. Content Margins - Top
+            if (marginTop > 20) {
+                contentMarginTextTop.style.display = 'block';
+                contentMarginTextTop.style.left = (contentX + activeGutterLeft + (contentWidth - activeGutterLeft - activeGutterRight) / 2) + 'px';
+                contentMarginTextTop.style.top = (contentY + marginTop / 2) + 'px';
+            } else {
+                contentMarginTextTop.style.display = 'none';
+            }
+
+            // 4. Content Margins - Bottom
+            if (marginBottom > 20) {
+                contentMarginTextBottom.style.display = 'block';
+                contentMarginTextBottom.style.left = (contentX + activeGutterLeft + (contentWidth - activeGutterLeft - activeGutterRight) / 2) + 'px';
+                contentMarginTextBottom.style.top = (contentY + contentHeight - marginBottom / 2) + 'px';
+            } else {
+                contentMarginTextBottom.style.display = 'none';
+            }
+
+            // 5. Content Margins - Left
+            if (marginLeft > 20) {
+                contentMarginTextLeft.style.display = 'block';
+                contentMarginTextLeft.style.left = (contentX + activeGutterLeft + marginLeft / 2) + 'px';
+                contentMarginTextLeft.style.top = (contentY + contentHeight / 2) + 'px';
+            } else {
+                contentMarginTextLeft.style.display = 'none';
+            }
+
+            // 6. Content Margins - Right
+            if (marginRight > 20) {
+                contentMarginTextRight.style.display = 'block';
+                contentMarginTextRight.style.left = (contentX + contentWidth - activeGutterRight - marginRight / 2) + 'px';
+                contentMarginTextRight.style.top = (contentY + contentHeight / 2) + 'px';
+            } else {
+                contentMarginTextRight.style.display = 'none';
+            }
+        }
+
         deviceTypeSelect.addEventListener('change', updatePageSizes);
         scaleTypeSelect.addEventListener('change', updatePageSizes);
         templateTypeSelect.addEventListener('change', updateTemplate);
@@ -2129,6 +2715,12 @@ ${gridSvgContent}
         overlayGridSelect.addEventListener('change', updateTemplate);
         showRulersCheckbox.addEventListener('change', updateRulers);
         showMarginDimensionsCheckbox.addEventListener('change', updateTemplate);
+        useGutterMarginsCheckbox.addEventListener('change', updateTemplate);
+        gutterLeftSelect.addEventListener('change', updateTemplate);
+        gutterRightSelect.addEventListener('change', updateTemplate);
+        gutterColorSelect.addEventListener('change', updateTemplate);
+        showMarginTextsCheckbox.addEventListener('change', updateTemplate);
+        centeringMarginColorSelect.addEventListener('change', updateTemplate);
 
         // Populate PDF page count dropdown
         for (let i = 1; i <= 400; i++) {
@@ -2146,6 +2738,7 @@ ${gridSvgContent}
         updateUsableArea();
         updateDebugInfo();
         updateRulerSizeLabel();
+        updateCenteringColorVisibility();
     </script>
 </body>
 </html>
