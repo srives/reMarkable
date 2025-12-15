@@ -7,8 +7,10 @@ View the website here:
 [               Rives' reMarkable Template Builder for Book Publishing](https://srives.github.io/reMarkable/)
 
 This site was first created to help me on my Growth Calculus. One downside (currently) is that
-to get a privately generated template loaded onto your tablet requires a third part tool. I hope
-the reMarkable team will provide this feature in their software soon.
+to get a privately generated template loaded onto your tablet requires a third party tool. We
+hope the reMarkable team will provide this feature in their software soon.
 
 reMarkable's generally need a SVG or PNG output. But you can also have a PDF and use it as 
 a workbook. 
+
+Steve Rives
