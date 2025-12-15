@@ -594,15 +594,18 @@
             <label for="showMarginDimensions" style="margin-left: 20px;">Show Wd × Ht:</label>
             <input type="checkbox" id="showMarginDimensions">
 
-            <button onclick="decreaseRulerSize()" style="margin-left: 10px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">−</button>
+            <span id="rulerSizeLabel" style="margin-left: 20px; font-size: 11px; color: #666;">Text Size 7</span>
+            <button onclick="decreaseRulerSize()" style="margin-left: 5px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">−</button>
             <button onclick="increaseRulerSize()" style="margin-left: 5px; padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">+</button>
-            <span id="rulerSizeLabel" style="margin-left: 10px; font-size: 11px; color: #666;">Text Size {7}</span>
         </div>
 
         <div style="margin-top: 10px;">
-            <button onclick="savePDF()" style="background: #28a745;">Save PDF</button>
-            <button onclick="saveSVG()" style="background: #17a2b8; margin-left: 10px;">Save SVG</button>
-            <button onclick="savePNG()" style="background: #ffc107; color: #000; margin-left: 10px;">Save PNG</button>
+            <label for="pdfPageCount">Pages:</label>
+            <select id="pdfPageCount" style="padding: 4px;">
+            </select>
+            <button onclick="savePDF()" style="background: #28a745; margin-left: 10px;">Save Workbook PDF</button>
+            <button onclick="saveSVG()" style="background: #17a2b8; margin-left: 20px;">Save Template SVG</button>
+            <button onclick="savePNG()" style="background: #ffc107; color: #000; margin-left: 10px;">Save Template PNG</button>
         </div>
 
         <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-left: 4px solid #6c757d; border-radius: 4px; font-size: 12px; font-family: monospace;">
@@ -611,7 +614,7 @@
     </div>
     
     <div class="info">
-        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.10</span> 
+        <strong>Instructions:</strong> <span style="color: #666; font-size: 12px; margin-left: 10px;">Version 1.0.2</span> 
         <ul style="margin: 10px 0; padding-left: 20px;">
             <li><strong>Device:</strong> Select your reMarkable device. This adjusts the canvas size and available page sizes.</li>
             <li><strong>Scale:</strong> Choose "Yes" for DPI-scaled page sizes or "No" to use the full device screen for the selected page size. When "No" is selected, the entire device canvas represents the physical page dimensions (e.g., selecting "6" × 9"" makes the full device screen represent a 6" × 9" page), no default margins are applied, and rulers/grids scale to match the selected physical dimensions. Scale set to No means that we use the actual tablet size. What you write on it will map to a PDF on export. When Scale is Yes (the default) you are writing the actual size as it will appear in the book.</li>
@@ -679,6 +682,7 @@
         const marginLabelTop = document.getElementById('marginLabelTop');
         const marginLabelRight = document.getElementById('marginLabelRight');
         const debugInfo = document.getElementById('debugInfo');
+        const pdfPageCount = document.getElementById('pdfPageCount');
 
         let rulerFontSize = 7; // Default ruler text size
 
@@ -1000,7 +1004,7 @@
         function updateRulerSizeLabel() {
             const label = document.getElementById('rulerSizeLabel');
             if (label) {
-                label.textContent = `Text Size {${rulerFontSize}}`;
+                label.textContent = `Text Size ${rulerFontSize}`;
             }
         }
 
@@ -1170,10 +1174,27 @@
             const originalTitle = document.title;
             document.title = filename;
 
+            // Get number of pages to print
+            const pageCount = parseInt(pdfPageCount.value);
+            const clonedPages = [];
+
+            // Clone the template page (pageCount - 1) times and insert after the original
+            if (pageCount > 1) {
+                const container = templatePage.parentElement;
+                for (let i = 1; i < pageCount; i++) {
+                    const clone = templatePage.cloneNode(true);
+                    clone.id = 'templatePage_clone_' + i;
+                    container.appendChild(clone);
+                    clonedPages.push(clone);
+                }
+            }
+
             window.print();
 
             setTimeout(() => {
                 document.title = originalTitle;
+                // Remove cloned pages after printing
+                clonedPages.forEach(clone => clone.remove());
             }, 1000);
         }
 
@@ -2108,7 +2129,18 @@ ${gridSvgContent}
         overlayGridSelect.addEventListener('change', updateTemplate);
         showRulersCheckbox.addEventListener('change', updateRulers);
         showMarginDimensionsCheckbox.addEventListener('change', updateTemplate);
-        
+
+        // Populate PDF page count dropdown
+        for (let i = 1; i <= 400; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            if (i === 1) {
+                option.selected = true;
+            }
+            pdfPageCount.appendChild(option);
+        }
+
         updatePageSizes();
         updateRecommendation();
         updateUsableArea();
